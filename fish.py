@@ -47,13 +47,6 @@ def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
     return neighs
 
 
-def normalize(vector):
-    """
-    Normalizes a vector.
-    """
-    return tuple(vector / np.linalg.norm(vector))
-
-
 def separation(current_fish, separation_neighs):
     """
     Calculates the new direction based on two fish that are too close to
@@ -134,11 +127,11 @@ def simulate(fish):
 
 
 class Model:
-    def __init__(self, height=50, width=50, num_fish=10, fish_size=0.1,
+    def __init__(self, height=50, width=50, num_fish=10, fish_radius=0.1,
                  dt=1 / 30):
         self.height = height
         self.width = width
-        self.fish_size = fish_size
+        self.fish_radius = fish_radius
         self.dt = dt
 
         self.fish = self.spawn_fish(num_fish)
@@ -164,28 +157,28 @@ class Model:
     def step(self):
         self.time += self.dt
 
-        self.fish[:, :2] += self.dt * self.fish[:, 2:]
+        # self.fish[:, :2] += self.dt * self.fish[:, 2:]
 
         # TODO: fixen
-        # for i in range(len(self.fish)):
-        #     current_fish = self.fish[i]
-        #     neighs = get_neighs(self.fish, current_fish)
-        #     separation_neighs = get_neighs(self.fish, current_fish,
-        #                                    SEPARATION_RANGE)
+        for i in range(len(self.fish)):
+            current_fish = self.fish[i]
+            neighs = get_neighs(self.fish, current_fish)
+            separation_neighs = get_neighs(self.fish, current_fish,
+                                           SEPARATION_RANGE)
 
-        #     separation_dir = separation(current_fish, separation_neighs)
+            separation_dir = separation(current_fish, separation_neighs)
 
-        #     cohesion_dir = cohesion(current_fish, neighs)
-        #     alignment_dir = alignment(neighs)
+            cohesion_dir = cohesion(current_fish, neighs)
+            alignment_dir = alignment(neighs)
 
-        #     # calculate the new direction
-        #     new_direction = (cohesion_dir + alignment_dir + separation_dir) / 3
+            # Calculate the new direction
+            new_velocity = (cohesion_dir + alignment_dir + separation_dir) / 3
 
-        #     # calculate the new position
-        #     new_pos = np.array(current_fish[:2]) + new_direction * 0.1
+            # Calculate the new position
+            new_pos = current_fish[:2] + new_velocity * self.dt
 
-        #     # update the fish
-        #     self.fish[i] = np.concatenate((new_pos, new_direction))
+            # Update the fish
+            self.fish[i] = np.concatenate((new_pos, new_velocity))
 
 
         # # find pairs of particles undergoing a collision
@@ -198,54 +191,54 @@ class Model:
 
         # TODO: mooier maken?
         # Prevent the fish from going out of bound
-        crossed_x1 = (self.fish[:, 0] < self.fish_size)
-        crossed_x2 = (self.fish[:, 0] > self.width - self.fish_size)
-        crossed_y1 = (self.fish[:, 1] < self.fish_size)
-        crossed_y2 = (self.fish[:, 1] > self.height - self.fish_size)
+        crossed_x1 = (self.fish[:, 0] < self.fish_radius)
+        crossed_x2 = (self.fish[:, 0] > self.width - self.fish_radius)
+        crossed_y1 = (self.fish[:, 1] < self.fish_radius)
+        crossed_y2 = (self.fish[:, 1] > self.height - self.fish_radius)
 
-        self.fish[crossed_x1, 0] = self.fish_size
-        self.fish[crossed_x2, 0] = self.width - self.fish_size
+        self.fish[crossed_x1, 0] = self.fish_radius
+        self.fish[crossed_x2, 0] = self.width - self.fish_radius
 
-        self.fish[crossed_y1, 1] = self.fish_size
-        self.fish[crossed_y2, 1] = self.height - self.fish_size
+        self.fish[crossed_y1, 1] = self.fish_radius
+        self.fish[crossed_y2, 1] = self.height - self.fish_radius
 
         self.fish[crossed_x1 | crossed_x2, 2] *= -1
         self.fish[crossed_y1 | crossed_y2, 3] *= -1
 
 
+def animate(i):
+    """
+    Perform animation step.
+    """
+    model.step()
+
+    # Update the fish of the animation
+    fish_animation.set_data(model.fish[:, 0], model.fish[:, 1])
+
+    return fish_animation, rect
+
+
 if __name__ == '__main__':
     # Model parameters
-    height = 5
-    width = 5
-    num_fish = 10
-    fish_size = 0.1
+    height = 10
+    width = 10
+    num_fish = 10  # TODO: of density?
+    fish_radius = 0.1
     dt = 1 / 30  # 30 fps
 
     model = Model(height=height, width=width, num_fish=num_fish,
-                  fish_size=fish_size, dt=dt)
+                  fish_radius=fish_radius, dt=dt)
 
-    # Set up figure and animation
     fig = plt.figure()
-    # fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
     ax = fig.add_subplot(111, aspect='equal', autoscale_on=False,
                          xlim=[0, width], ylim=[0, height])
 
-    fish_animation, = ax.plot([], [], 'o', color='blue', ms=6)
+    fish_animation, = ax.plot([], [], 'o', color='white', ms=5)
 
-    rect = plt.Rectangle((0, 0), width, height,
-                         ec='none', lw=2, fc='none')
+    rect = plt.Rectangle((0, 0), width, height, ec='none')
     ax.add_patch(rect)
 
-    def animate(i):
-        """perform animation step"""
-        model.step()
-
-        # Update pieces of the animation
-        rect.set_edgecolor('k')
-        fish_animation.set_data(model.fish[:, 0], model.fish[:, 1])
-        # fish_animation.set_markersize(10)
-        return fish_animation, rect
-
+    # Set up the animation
     ani = animation.FuncAnimation(fig, animate, frames=600,
                                   interval=10, blit=True)
 
