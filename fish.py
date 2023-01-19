@@ -234,9 +234,10 @@ class Model:
             # check if the new position was a valid position, if not, we don't move and keep the previous position
             same = all([x == y for x, y in zip(new_velocity, correction_velocity)])
             if not same:
-                print("correction for fish {} since it hit a wall {}".format(current_fish, correction_velocity))
-                new_pos = self.fish[i][:2]
-                new_velocity = correction_velocity
+                new_velocity = correction_velocity.copy() * 4
+                new_pos = current_fish[:2] + new_velocity * 5 * self.dt
+
+                print("correction for fish {} since it hit a wall. New vcelocity: {}".format(current_fish, new_velocity))
 
             # Update the fish
             self.fish[i] = np.concatenate((new_pos, new_velocity))
