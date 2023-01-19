@@ -100,6 +100,18 @@ def cohesion(current_fish, neighs):
     return direction
 
 
+
+def random_direction(alter_velocity=False):
+    """
+    Returns a random direction.
+    """
+    angle = np.random.uniform() * 2 * np.pi  # direction in randians
+    velocity = 1
+    if alter_velocity:
+        velocity = np.random.uniform(0.5, 2)
+    return velocity * np.cos(angle), velocity * np.sin(angle)
+
+
 # @njit
 def simulate(fish):
     """
@@ -126,6 +138,46 @@ def simulate(fish):
         fish[i] = [new_pos, new_direction, current_fish[2:]]
 
 
+def new_angle(pos, velocity, width, height):
+    """
+    Checks if a fish is outside the grid, if so, it calculates and returns a new direction for the fish. If not, it
+    simply returns the already calculated direction (velocity).
+    """
+    x, y = pos
+    a = 0
+    b = 0
+    # we move left: [0.5pi, 1.5pi]
+    if x > width:
+        a = 0.5 * np.pi
+        b = 1.5 * np.pi
+        # we move left and up: [0.5pi, pi]
+        if y < 0:
+            a = 0.5 * np.pi
+            b = np.pi
+        # we move left and down: [pi, 1.5pi]
+        elif y > height:
+            a = np.pi
+            b = 1.5 * np.pi
+    # we move right: [1.5pi, 2.5pi]
+    elif x < 0:
+        a = 1.5 * np.pi
+        b = 2.5 * np.pi
+        # we move right and up: [0, 0.5pi]
+        if y < 0:
+            a = 0
+            b = 0.5 * np.pi
+        # we move right and down: [1.5pi, 2pi]
+        elif y > height:
+            a = 1.5 * np.pi
+            b = 2 * np.pi
+    # we can simply use the current angle
+    else:
+        return velocity
+
+    angle = np.random.uniform(a, b)
+    return np.array([np.cos(angle), np.sin(angle)])
+
+
 class Model:
     def __init__(self, height=50, width=50, num_fish=10, fish_radius=0.1,
                  dt=1 / 30):
@@ -144,12 +196,10 @@ class Model:
             x = np.random.uniform() * self.width
             y = np.random.uniform() * self.height
 
-            # Direction angle in radians
-            angle = np.random.uniform() * 2 * np.pi
+            # TODO: speed aanpassen (nu is het altijd 1) dit kan meegegeven worden in de functie
+            x_dir, y_dir = random_direction()
 
-            # TODO: speed aanpassen (nu is het altijd 1)
-
-            new_fish = [x, y, np.cos(angle), np.sin(angle)]
+            new_fish = [x, y, x_dir, y_dir]
             fish.append(new_fish)
 
         return np.array(fish)
@@ -176,6 +226,17 @@ class Model:
 
             # Calculate the new position
             new_pos = current_fish[:2] + new_velocity * self.dt
+
+            # TODO: een random snelheid meegeven aan de vis
+            # corrects for fish that end up outside the grid, by going away from the wall.
+            correction_velocity = new_angle(new_pos, new_velocity, self.width, self.height)
+
+            # check if the new position was a valid position, if not, we don't move and keep the previous position
+            same = all([x == y for x, y in zip(new_velocity, correction_velocity)])
+            if not same:
+                print("correction for fish {} since it hit a wall {}".format(current_fish, correction_velocity))
+                new_pos = self.fish[i][:2]
+                new_velocity = correction_velocity
 
             # Update the fish
             self.fish[i] = np.concatenate((new_pos, new_velocity))
