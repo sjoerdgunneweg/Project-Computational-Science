@@ -127,7 +127,7 @@ def simulate(fish):
 
 
 class Model:
-    def __init__(self, height=50, width=50, num_fish=10, fish_radius=0.1,
+    def __init__(self, height=50, width=50, num_fish=100, fish_radius=0.5,
                  dt=1 / 30):
         self.height = height
         self.width = width
@@ -136,6 +136,9 @@ class Model:
 
         self.fish = self.spawn_fish(num_fish)
         self.time = 0
+
+
+        self.test_counter = 0
 
     def spawn_fish(self, num_fish):
         fish = []
@@ -154,10 +157,18 @@ class Model:
 
         return np.array(fish)
 
+    
+
     def step(self):
         self.time += self.dt
 
         # self.fish[:, :2] += self.dt * self.fish[:, 2:]
+        
+        self.test_counter += 1
+
+        c_weight = 1.5
+        s_weight = 3
+        a_weight = 2
 
         # TODO: fixen
         for i in range(len(self.fish)):
@@ -172,13 +183,21 @@ class Model:
             alignment_dir = alignment(neighs)
 
             # Calculate the new direction
-            new_velocity = (cohesion_dir + alignment_dir + separation_dir) / 3
+            new_velocity = (c_weight * cohesion_dir + a_weight * alignment_dir + s_weight * separation_dir) / 3
 
             # Calculate the new position
             new_pos = current_fish[:2] + new_velocity * self.dt
 
             # Update the fish
-            self.fish[i] = np.concatenate((new_pos, new_velocity))
+            # self.fish[i] = np.concatenate((new_pos, new_velocity))
+
+            if self.test_counter == 10:
+                self.test_counter = 0
+                self.fish[i] = np.concatenate((new_pos, np.random.uniform(low=-100, high=1, size=(2,)[0]))) 
+                
+
+            else:
+                self.fish[i] = np.concatenate((new_pos, new_velocity))
 
 
         # # find pairs of particles undergoing a collision
@@ -223,7 +242,7 @@ if __name__ == '__main__':
     height = 10
     width = 10
     num_fish = 10  # TODO: of density?
-    fish_radius = 0.1
+    fish_radius = 2
     dt = 1 / 30  # 30 fps
 
     model = Model(height=height, width=width, num_fish=num_fish,
