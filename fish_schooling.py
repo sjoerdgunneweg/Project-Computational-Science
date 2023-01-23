@@ -80,7 +80,8 @@ class Simulation(Model):
                 continue
 
             # Calculate the Euclidean distance
-            distance = np.linalg.norm(current_fish[POS] - f[POS])
+            distance = np.sqrt((current_fish[X_POS] - f[X_POS])**2 +
+                               (current_fish[Y_POS] - f[Y_POS])**2)
 
             if distance <= radius:
                 neighbours.append(np.append(f, distance))
@@ -153,7 +154,7 @@ class Simulation(Model):
         f[VEL] += alignment_vel + cohesion_vel + separation_vel
 
         # Keep the speed constant
-        f[VEL] = f[VEL] / np.linalg.norm(f[VEL]) * self.speed
+        f[VEL] = f[VEL] / np.sqrt(f[X_VEL]**2 + f[Y_VEL]**2) * self.speed
 
     def step(self):
         self.time += self.dt
