@@ -43,6 +43,10 @@ def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
         distance = np.linalg.norm(np.array(current_fish[:2]) - np.array(f[:2]))
         if distance <= radius:
             # neighs.append(f + [distance])
+            # test = f.append(distance)
+            # print(f)
+            f = np.append(f, np.array([distance]))
+            # print(f)
             neighs.append(f)
 
     return neighs
@@ -61,9 +65,46 @@ def separation(current_fish, separation_neighs):
         return np.array([0, 0]) #vgm niet!!!!!!!!!!!!1
     # x_pos = [n[0] for n in separation_neighs]
     # y_pos = [n[1] for n in separation_neighs]
-    if len(separation_neighs) != 0:
-        print(separation_neighs)
+    # if len(separation_neighs) != 0:
+    #     print(separation_neighs)
     # print(separation_neighs)
+
+
+    distances = [n[4] for n in separation_neighs]
+    idx = distances.index(min(distances))
+    nearest_neighbour = separation_neighs[idx]
+
+    nearest_neighbour = nearest_neighbour[:-1]
+
+
+    if nearest_neighbour[0] - current_fish[0] == 0.0:
+        angle = np.arctan((nearest_neighbour[1] - current_fish[1]) / 0.0001)
+    else:
+        angle = np.arctan((nearest_neighbour[1] - current_fish[1]) / (nearest_neighbour[0] - current_fish[0]))
+
+    # print(angle)
+
+    # print(current_fish[2])
+    print('')
+    test = np.array([np.cos(angle), np.sin(angle)])
+    print(test)
+
+    current_ang = np.array(current_fish[2:])
+
+    print(current_ang)
+
+    # new_angle = test - current_ang
+    new_angle = nearest_neighbour[2:] - current_ang
+    print(new_angle)
+    print('')
+
+
+
+
+
+
+
+
 
 
     # neigh_cos = [n[2] for n in separation_neighs]
@@ -89,15 +130,8 @@ def separation(current_fish, separation_neighs):
 
 
     # direction = mean_angle_away - current_ang
-    return direction
-
-
-
-def seperation2(current_fish, separation_neighs):
-    if len(separation_neighs) == 0:
-        pass
-
-
+    # return direction
+    return new_angle
 
 
 # @njit
