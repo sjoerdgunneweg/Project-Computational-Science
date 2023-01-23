@@ -12,7 +12,7 @@ different time steps and a function to visualize these timesteps.
 """
 
 import numpy as np
-from numba import njit
+from numba import jit
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -20,17 +20,19 @@ X_POS = 0
 Y_POS = 1
 X_VEL = 2
 Y_VEL = 3
+DIS = 4
 
 POS = [X_POS, Y_POS]
 VEL = [X_VEL, Y_VEL]
 
 
 class Model:
-    def __init__(self, height, width, num_fish, dt, align_radius, align_weight,
-                 cohesion_radius, cohesion_weight, separation_radius,
-                 separation_weight):
+    def __init__(self, height, width, num_fish, speed, dt, align_radius,
+                 align_weight, cohesion_radius, cohesion_weight,
+                 separation_radius, separation_weight):
         self.height = height
         self.width = width
+        self.speed = speed
         self.dt = dt
         self.align_radius = align_radius
         self.align_weight = align_weight
@@ -40,7 +42,6 @@ class Model:
         self.separation_weight = separation_weight
 
         self.time = 0
-        self.speed = 2
         self.fish = self.spawn_fish(num_fish)
 
     def spawn_fish(self, num_fish):
@@ -77,7 +78,7 @@ class Model:
             distance = np.linalg.norm(current_fish[POS] - f[POS])
 
             if distance <= radius:
-                neighbours.append(f)
+                neighbours.append(np.append(f, distance))
 
         return np.array(neighbours)
 
@@ -102,27 +103,24 @@ class Model:
         if len(neighbours) == 0:
             return np.array([0, 0], dtype=float)
 
-        # TODO: - current_fish[VEL]?
-        return np.mean(neighbours[:, POS], axis=0) - current_fish[POS]
+        return (np.mean(neighbours[:, POS], axis=0) - current_fish[POS] -
+                current_fish[VEL])
 
+    # @staticmethod
+    # @jit(nopython=True)
     def separation(self, fish, current_fish):
         """
         Moves the fish away from its neighbours.
         """
         neighbours = self.get_neighbours(fish, current_fish,
                                          self.separation_radius)
-
-        if len(neighbours) == 0:
-            return np.array([0, 0], dtype=float)
-
         new_vel = np.array([0, 0], dtype=float)
 
-        for n in neighbours:
-            distance = np.linalg.norm(current_fish[POS] - n[POS])
-            diff = current_fish[POS] - n[POS]
-            diff /= distance**2
+        if len(neighbours) == 0:
+            return new_vel
 
-            new_vel += diff
+        for n in neighbours:
+            new_vel += (current_fish[POS] - n[POS]) / n[DIS]**2
 
         return new_vel / len(neighbours) - current_fish[VEL]
 
@@ -179,17 +177,19 @@ if __name__ == '__main__':
     height = 5
     width = 5
     num_fish = 20  # TODO: of density?
+    speed = 2
     dt = 1 / 30  # 30 fps
     align_radius = 0.5
     align_weight = 0.6
     cohesion_radius = 0.5
-    cohesion_weight = 0.8
+    cohesion_weight = 0.2
     separation_radius = 0.4
     separation_weight = 0.2
 
     model = Model(height=height,
                   width=width,
                   num_fish=num_fish,
+                  speed=speed,
                   dt=dt,
                   align_radius=align_radius,
                   align_weight=align_weight,
