@@ -130,8 +130,8 @@ def separation(current_fish, separation_neighs):
 
 
     # direction = mean_angle_away - current_ang
-    # return direction
-    return new_angle
+    return direction
+    # return new_angle
 
 
 # @njit
