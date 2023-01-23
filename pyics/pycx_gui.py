@@ -80,7 +80,7 @@ class GUI:
 
         self.rootWindow.wm_title(self.titleText)
         self.rootWindow.protocol('WM_DELETE_WINDOW', self.quitGUI)
-        self.rootWindow.geometry('550x700')
+        self.rootWindow.geometry('550x700+740+40')
         self.rootWindow.columnconfigure(0, weight=1)
         self.rootWindow.rowconfigure(0, weight=1)
 
