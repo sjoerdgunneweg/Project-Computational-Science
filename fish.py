@@ -53,23 +53,51 @@ def separation(current_fish, separation_neighs):
     Calculates the new direction based on two fish that are too close to
     each other.
 
-    Miss iets van als afstand < dan iets --> richting naar dichtsbzijnde 90 graden hoek ???
+    Eig misschien calculate de opposite angle of neighbour en average het met eigen angle
 
 
     """
     if len(separation_neighs) == 0:
-        return np.array([0, 0])
-    x_pos = [n[0] for n in separation_neighs]
-    y_pos = [n[1] for n in separation_neighs]
+        return np.array([0, 0]) #vgm niet!!!!!!!!!!!!1
+    # x_pos = [n[0] for n in separation_neighs]
+    # y_pos = [n[1] for n in separation_neighs]
+    if len(separation_neighs) != 0:
+        print(separation_neighs)
+    # print(separation_neighs)
 
-    mean_pos = np.array([np.mean(x_pos), np.mean(y_pos)])
-    current_pos = np.array(current_fish[:2])
 
-    # This flip of the subtraction ensures that all the fish move away from
-    # each other instead of towards each other like in the cohesion rule.
-    direction = current_pos - mean_pos
+    # neigh_cos = [n[2] for n in separation_neighs]
+    # neigh_sin = [n[3] for n in separation_neighs]
+    opposite_of_neigh_cos = [-1 * n[2] for n in separation_neighs]
+    opposite_of_neigh_sin = [-1 * n[3] for n in separation_neighs]
 
+
+    mean_angle_away = np.array([np.mean(opposite_of_neigh_cos), np.mean(opposite_of_neigh_sin)])
+
+
+    # mean_pos = np.array([np.mean(x_pos), np.mean(y_pos)])
+    # current_pos = np.array(current_fish[:2])
+
+    # # This flip of the subtraction ensures that all the fish move away from
+    # # each other instead of towards each other like in the cohesion rule.
+    # direction = current_pos - mean_pos
+
+    current_ang = np.array(current_fish[2:])
+
+
+    direction = current_ang - mean_angle_away
+
+
+    # direction = mean_angle_away - current_ang
     return direction
+
+
+
+def seperation2(current_fish, separation_neighs):
+    if len(separation_neighs) == 0:
+        pass
+
+
 
 
 # @njit
@@ -100,35 +128,44 @@ def cohesion(current_fish, neighs):
     mean_pos = np.array([np.mean(x_pos), np.mean(y_pos)])
     current_pos = np.array(current_fish[:2])
 
-    direction = mean_pos - current_pos
+
+    pos_dif = mean_pos - current_pos
+
+
+    # direction = mean_pos - current_pos
+
+    # angle between the 2 points
+    atan = np.arctan2(pos_dif[1], pos_dif[0])
+
+    direction = np.array([np.cos(atan), np.sin(atan)])
 
     return direction
 
 
-# @njit
-def simulate(fish):
-    """
-    For the simulation we will calculate the new positions in parallel to
-    ensure every update is based on the same iteration.
-    """
-    for i in range(len(fish)):
-        current_fish = fish[i]
-        neighs = get_neighs(fish, current_fish)
-        separation_neighs = get_neighs(fish, current_fish, SEPARATION_RANGE)
+# # @njit
+# def simulate(fish):
+#     """
+#     For the simulation we will calculate the new positions in parallel to
+#     ensure every update is based on the same iteration.
+#     """
+#     for i in range(len(fish)):
+#         current_fish = fish[i]
+#         neighs = get_neighs(fish, current_fish)
+#         separation_neighs = get_neighs(fish, current_fish, SEPARATION_RANGE)
 
-        separation_dir = separation(current_fish, separation_neighs)
+#         separation_dir = separation(current_fish, separation_neighs)
 
-        cohesion_dir = cohesion(current_fish, neighs)
-        alignment_dir = alignment(neighs)
+#         cohesion_dir = cohesion(current_fish, neighs)
+#         alignment_dir = alignment(neighs)
 
-        # Calculate the new direction
-        new_direction = (cohesion_dir + alignment_dir + separation_dir) / 3
+#         # Calculate the new direction
+#         new_direction = (cohesion_dir + alignment_dir + separation_dir) / 3
 
-        # Calculate the new position
-        new_pos = np.array(current_fish[:2]) + new_direction * 0.1
+#         # Calculate the new position
+#         new_pos = np.array(current_fish[:2]) + new_direction * 0.1
 
-        # Update the fish
-        fish[i] = [new_pos, new_direction, current_fish[2:]]
+#         # Update the fish
+#         fish[i] = [new_pos, new_direction, current_fish[2:]]
 
 
 class Model:
