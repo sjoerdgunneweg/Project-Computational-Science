@@ -22,6 +22,7 @@ X_POS = 0
 Y_POS = 1
 X_VEL = 2
 Y_VEL = 3
+DIS = 4
 
 POS = [X_POS, Y_POS]
 VEL = [X_VEL, Y_VEL]
@@ -82,7 +83,7 @@ class Simulation(Model):
             distance = np.linalg.norm(current_fish[POS] - f[POS])
 
             if distance <= radius:
-                neighbours.append(f)
+                neighbours.append(np.append(f, distance))
 
         return np.array(neighbours)
 
@@ -108,8 +109,8 @@ class Simulation(Model):
         if len(neighbours) == 0:
             return np.array([0, 0], dtype=float)
 
-        # TODO: - current_fish[VEL]?
-        return np.mean(neighbours[:, POS], axis=0) - current_fish[POS]
+        return (np.mean(neighbours[:, POS], axis=0) - current_fish[POS] -
+                current_fish[VEL])
 
     def separation(self, fish, current_fish):
         """
@@ -117,18 +118,13 @@ class Simulation(Model):
         """
         neighbours = self.get_neighbours(fish, current_fish,
                                          self.separation_radius)
-
-        if len(neighbours) == 0:
-            return np.array([0, 0], dtype=float)
-
         new_vel = np.array([0, 0], dtype=float)
 
-        for n in neighbours:
-            distance = np.linalg.norm(current_fish[POS] - n[POS])
-            diff = current_fish[POS] - n[POS]
-            diff /= distance**2
+        if len(neighbours) == 0:
+            return new_vel
 
-            new_vel += diff
+        for n in neighbours:
+            new_vel += (current_fish[POS] - n[POS]) / n[DIS]**2
 
         return new_vel / len(neighbours) - current_fish[VEL]
 
@@ -168,12 +164,13 @@ class Simulation(Model):
 
     def draw(self):
         plt.cla()
-        plt.title(f'Time = {self.time:.2f}')
+        plt.title(f'Time: {self.time:.2f}')
         plt.xlim(0, self.width)
         plt.ylim(0, self.height)
         plt.fill([0, self.width, self.width, 0],
                  [0, 0, self.height, self.height], color='deepskyblue')
-        plt.plot(self.fish[:, 0], sim.fish[:, 1], 'o', color='white', ms=5)
+        plt.plot(self.fish[:, X_POS], sim.fish[:, Y_POS], 'o', color='white',
+                 ms=5)
 
     def reset(self):
         self.time = 0
@@ -188,7 +185,7 @@ if __name__ == '__main__':
                      alignment_radius=0.5,
                      alignment_weight=0.6,
                      cohesion_radius=0.5,
-                     cohesion_weight=0.8,
+                     cohesion_weight=0.2,
                      separation_radius=0.4,
                      separation_weight=0.2)
     gui = GUI(sim)
