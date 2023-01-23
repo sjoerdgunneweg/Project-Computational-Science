@@ -42,17 +42,10 @@ else:
     matplotlib.use('TkAgg')
 
 import matplotlib.pyplot as plt
+from tkinter import (Tk, StringVar, Frame, Label, Button, Scale, Entry,
+                     Canvas, Scrollbar, Text, YES, NO, LEFT, RIGHT, BOTH, TOP,
+                     SUNKEN, X, Y, W, WORD, NORMAL, DISABLED, HORIZONTAL, END)
 
-try:
-    # Python2
-    from Tkinter import (Tk, StringVar, Frame, Label, Button, Scale, Entry,
-            Canvas, Scrollbar, Text, YES, NO, LEFT, RIGHT, BOTH, TOP, SUNKEN, X,
-            Y, W, WORD, NORMAL, DISABLED, HORIZONTAL, END)
-except ImportError:
-    # Python3
-    from tkinter import (Tk, StringVar, Frame, Label, Button, Scale, Entry,
-            Canvas, Scrollbar, Text, YES, NO, LEFT, RIGHT, BOTH, TOP, SUNKEN, X,
-            Y, W, WORD, NORMAL, DISABLED, HORIZONTAL, END)
 
 class GUI:
     def __init__(self, model, title='PyCX Simulator', interval=0, stepSize=1,
