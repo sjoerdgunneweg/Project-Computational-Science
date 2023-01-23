@@ -140,6 +140,10 @@ class Model:
             f[Y_POS] = 0
 
     def update_velocity(self, f):
+        # Randomly change the velocity
+        f[VEL] += np.array([np.random.uniform(-0.75, 0.75),
+                            np.random.uniform(-0.75, 0.75)])
+
         alignment_vel = self.alignment(self.fish, f) * self.align_weight
         cohesion_vel = self.cohesion(self.fish, f) * self.cohesion_weight
         separation_vel = self.separation(self.fish, f) * self.separation_weight
@@ -177,11 +181,11 @@ if __name__ == '__main__':
     num_fish = 20  # TODO: of density?
     dt = 1 / 30  # 30 fps
     align_radius = 0.5
-    align_weight = 0.5
+    align_weight = 0.6
     cohesion_radius = 0.5
-    cohesion_weight = 0.5
-    separation_radius = 0.2
-    separation_weight = 0.5
+    cohesion_weight = 0.8
+    separation_radius = 0.4
+    separation_weight = 0.2
 
     model = Model(height=height,
                   width=width,
