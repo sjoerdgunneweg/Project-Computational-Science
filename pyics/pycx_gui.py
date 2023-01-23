@@ -48,7 +48,7 @@ from tkinter import (Tk, StringVar, Frame, Label, Button, Scale, Entry,
 
 
 class GUI:
-    def __init__(self, model, title='PyCX Simulator', interval=0, stepSize=1,
+    def __init__(self, model, title='Fish Schooling Simulator', interval=0, stepSize=1,
             param_gui_names=None):
         self.model = model
         self.titleText = title
