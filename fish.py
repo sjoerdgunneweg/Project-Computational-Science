@@ -19,7 +19,7 @@ import matplotlib.animation as animation
 # import scipy.integrate as integrate
 
 NEIGH_RANGE = 10
-SEPARATION_RANGE = 2
+SEPARATION_RANGE = 3
 
 POS = 0
 VEL = 1
@@ -42,7 +42,8 @@ def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
         # Calculates the Euclidean distance
         distance = np.linalg.norm(np.array(current_fish[:2]) - np.array(f[:2]))
         if distance <= radius:
-            neighs.append(f + [distance])
+            # neighs.append(f + [distance])
+            neighs.append(f)
 
     return neighs
 
@@ -51,6 +52,10 @@ def separation(current_fish, separation_neighs):
     """
     Calculates the new direction based on two fish that are too close to
     each other.
+
+    Miss iets van als afstand < dan iets --> richting naar dichtsbzijnde 90 graden hoek ???
+
+
     """
     if len(separation_neighs) == 0:
         return np.array([0, 0])
@@ -166,9 +171,9 @@ class Model:
         
         self.test_counter += 1
 
-        c_weight = 1.5
-        s_weight = 3
-        a_weight = 2
+        c_weight = 1
+        s_weight = 1
+        a_weight = 1
 
         # TODO: fixen
         for i in range(len(self.fish)):
@@ -191,9 +196,11 @@ class Model:
             # Update the fish
             # self.fish[i] = np.concatenate((new_pos, new_velocity))
 
-            if self.test_counter == 10:
+            # print(new_velocity)
+
+            if self.test_counter == 2:
                 self.test_counter = 0
-                self.fish[i] = np.concatenate((new_pos, np.random.uniform(low=-100, high=1, size=(2,)[0]))) 
+                self.fish[i] = np.concatenate((new_pos, np.random.uniform(low=-4, high=4, size=(2,)[0]))) 
                 
 
             else:
@@ -239,8 +246,8 @@ def animate(i):
 
 if __name__ == '__main__':
     # Model parameters
-    height = 10
-    width = 10
+    height = 20
+    width = 20
     num_fish = 10  # TODO: of density?
     fish_radius = 2
     dt = 1 / 30  # 30 fps
