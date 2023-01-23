@@ -125,7 +125,8 @@ class Simulation(Model):
             return new_vel
 
         for n in neighbours:
-            new_vel += (current_fish[POS] - n[POS]) / n[DIS]**2
+            if n[DIS] != 0:
+                new_vel += (current_fish[POS] - n[POS]) / n[DIS]**2
 
         return new_vel / len(neighbours) - current_fish[VEL]
 
@@ -153,8 +154,9 @@ class Simulation(Model):
 
         f[VEL] += alignment_vel + cohesion_vel + separation_vel
 
-        # Keep the speed constant
-        f[VEL] = f[VEL] / np.sqrt(f[X_VEL]**2 + f[Y_VEL]**2) * self.speed
+        # Fix the speed
+        current_speed = np.sqrt(f[X_VEL]**2 + f[Y_VEL]**2)
+        f[VEL] = f[VEL] / current_speed * self.speed
 
     def step(self):
         self.time += self.dt
