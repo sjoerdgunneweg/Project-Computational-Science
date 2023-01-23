@@ -21,12 +21,6 @@ import matplotlib.animation as animation
 NEIGH_RANGE = 10
 SEPARATION_RANGE = 2
 
-POS = 0
-VEL = 1
-DIS = 2
-X = 0
-Y = 1
-
 
 def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
     """
@@ -42,7 +36,7 @@ def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
         # Calculates the Euclidean distance
         distance = np.linalg.norm(np.array(current_fish[:2]) - np.array(f[:2]))
         if distance <= radius:
-            neighs.append(f + [distance])
+            neighs.append(f)
 
     return neighs
 
@@ -212,7 +206,11 @@ class Model:
         # TODO: fixen
         for i in range(len(self.fish)):
             current_fish = self.fish[i]
+
             neighs = get_neighs(self.fish, current_fish)
+            if not neighs:
+                print("no neighs")
+
             separation_neighs = get_neighs(self.fish, current_fish,
                                            SEPARATION_RANGE)
 
@@ -222,7 +220,8 @@ class Model:
             alignment_dir = alignment(neighs)
 
             # Calculate the new direction
-            new_velocity = (cohesion_dir + alignment_dir + separation_dir) / 3
+            # new_velocity = (cohesion_dir + alignment_dir + separation_dir) / 3
+            new_velocity = separation_dir
 
             # Calculate the new position
             new_pos = current_fish[:2] + new_velocity * self.dt
@@ -237,7 +236,7 @@ class Model:
                 new_velocity = correction_velocity.copy() * 4
                 new_pos = current_fish[:2] + new_velocity * 5 * self.dt
 
-                print("correction for fish {} since it hit a wall. New vcelocity: {}".format(current_fish, new_velocity))
+                # print("correction for fish {} since it hit a wall. New vcelocity: {}".format(current_fish, new_velocity))
 
             # Update the fish
             self.fish[i] = np.concatenate((new_pos, new_velocity))
@@ -273,6 +272,7 @@ def animate(i):
     Perform animation step.
     """
     model.step()
+    ax.set_title(f'Time: {model.time:.2f}')
 
     # Update the fish of the animation
     fish_animation.set_data(model.fish[:, 0], model.fish[:, 1])
@@ -301,8 +301,7 @@ if __name__ == '__main__':
     ax.add_patch(rect)
 
     # Set up the animation
-    ani = animation.FuncAnimation(fig, animate, frames=600,
-                                  interval=10, blit=True)
+    ani = animation.FuncAnimation(fig, animate, frames=600, interval=10)
 
     #ani.save('particle_box.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
     plt.show()
