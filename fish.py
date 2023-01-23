@@ -19,7 +19,7 @@ import matplotlib.animation as animation
 # import scipy.integrate as integrate
 
 NEIGH_RANGE = 10
-SEPARATION_RANGE = 2
+SEPARATION_RANGE = 3
 
 
 def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
@@ -45,6 +45,10 @@ def separation(current_fish, separation_neighs):
     """
     Calculates the new direction based on two fish that are too close to
     each other.
+
+    Miss iets van als afstand < dan iets --> richting naar dichtsbzijnde 90 graden hoek ???
+
+
     """
     if len(separation_neighs) == 0:
         return np.array([0, 0])
@@ -173,7 +177,7 @@ def new_angle(pos, velocity, width, height):
 
 
 class Model:
-    def __init__(self, height=50, width=50, num_fish=10, fish_radius=0.1,
+    def __init__(self, height=50, width=50, num_fish=100, fish_radius=0.5,
                  dt=1 / 30):
         self.height = height
         self.width = width
@@ -182,6 +186,9 @@ class Model:
 
         self.fish = self.spawn_fish(num_fish)
         self.time = 0
+
+
+        self.test_counter = 0
 
     def spawn_fish(self, num_fish):
         fish = []
@@ -198,10 +205,18 @@ class Model:
 
         return np.array(fish)
 
+
+
     def step(self):
         self.time += self.dt
 
         # self.fish[:, :2] += self.dt * self.fish[:, 2:]
+
+        self.test_counter += 1
+
+        c_weight = 1
+        s_weight = 1
+        a_weight = 1
 
         # TODO: fixen
         for i in range(len(self.fish)):
@@ -220,8 +235,7 @@ class Model:
             alignment_dir = alignment(neighs)
 
             # Calculate the new direction
-            # new_velocity = (cohesion_dir + alignment_dir + separation_dir) / 3
-            new_velocity = separation_dir
+            new_velocity = (c_weight * cohesion_dir + a_weight * alignment_dir + s_weight * separation_dir) / 3
 
             # Calculate the new position
             new_pos = current_fish[:2] + new_velocity * self.dt
@@ -239,7 +253,17 @@ class Model:
                 # print("correction for fish {} since it hit a wall. New vcelocity: {}".format(current_fish, new_velocity))
 
             # Update the fish
-            self.fish[i] = np.concatenate((new_pos, new_velocity))
+            # self.fish[i] = np.concatenate((new_pos, new_velocity))
+
+            # print(new_velocity)
+
+            if self.test_counter == 2:
+                self.test_counter = 0
+                self.fish[i] = np.concatenate((new_pos, np.random.uniform(low=-4, high=4, size=(2,)[0])))
+
+
+            else:
+                self.fish[i] = np.concatenate((new_pos, new_velocity))
 
 
         # # find pairs of particles undergoing a collision
@@ -282,10 +306,10 @@ def animate(i):
 
 if __name__ == '__main__':
     # Model parameters
-    height = 10
-    width = 10
+    height = 20
+    width = 20
     num_fish = 10  # TODO: of density?
-    fish_radius = 0.1
+    fish_radius = 2
     dt = 1 / 30  # 30 fps
 
     model = Model(height=height, width=width, num_fish=num_fish,
