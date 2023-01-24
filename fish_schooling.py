@@ -66,6 +66,7 @@ class Simulation(Model):
                         self.speed * np.cos(angle), self.speed * np.sin(angle)]
             fish.append(new_fish)
 
+        # fish = [[1.0, 1.0, -1.0, 0.0]]
         return np.array(fish)
 
     def get_neighbours(self, fish, current_fish, radius):
@@ -134,16 +135,32 @@ class Simulation(Model):
 
     def update_position(self, f):
         f[POS] += f[VEL] * self.dt
+        padding = 0.5
 
-        if f[X_POS] < 0:
-            f[X_POS] = self.width
-        elif f[X_POS] > self.width:
-            f[X_POS] = 0
-
-        if f[Y_POS] < 0:
-            f[Y_POS] = self.height
-        elif f[Y_POS] > self.height:
-            f[Y_POS] = 0
+        # Left border
+        if f[X_POS] < padding:
+            # Random direction to the right
+            angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
+            f[VEL] = np.array([self.speed * np.cos(angle),
+                               self.speed * np.sin(angle)])
+        # Right border
+        elif f[X_POS] > self.width - padding:
+            # Random direction to the left
+            angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
+            f[VEL] = np.array([self.speed * np.cos(angle),
+                               self.speed * np.sin(angle)])
+        # Top border
+        if f[Y_POS] < padding:
+            # Random direction down
+            angle = np.random.uniform(0, np.pi)
+            f[VEL] = np.array([self.speed * np.cos(angle),
+                               self.speed * np.sin(angle)])
+        # Bottom border
+        elif f[Y_POS] > self.height - padding:
+            # Random direction up
+            angle = np.random.uniform(np.pi, 2 * np.pi)
+            f[VEL] = np.array([self.speed * np.cos(angle),
+                               self.speed * np.sin(angle)])
 
     def update_velocity(self, f):
         # Randomly change the velocity
@@ -164,8 +181,8 @@ class Simulation(Model):
         self.time += self.dt
 
         for f in self.fish:
-            self.update_position(f)
             self.update_velocity(f)
+            self.update_position(f)
 
     def draw(self):
         plt.cla()
@@ -174,8 +191,6 @@ class Simulation(Model):
         plt.ylim(0, self.height)
         plt.fill([0, self.width, self.width, 0],
                  [0, 0, self.height, self.height], color='cornflowerblue')
-        # plt.plot(self.fish[:, X_POS], self.fish[:, Y_POS], 'o', color='white',
-        #          ms=5)
         plt.quiver(self.fish[:, X_POS], self.fish[:, Y_POS],
                    self.fish[:, X_VEL], self.fish[:, Y_VEL], color='white',
                    width=0.01, headwidth=2, headlength=3)
