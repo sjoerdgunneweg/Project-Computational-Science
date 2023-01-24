@@ -36,6 +36,7 @@ def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
         # Calculates the Euclidean distance
         distance = np.linalg.norm(np.array(current_fish[:2]) - np.array(f[:2]))
         if distance <= radius:
+            f = np.append(f, np.array([distance]))
             neighs.append(f)
 
     return neighs
@@ -46,23 +47,81 @@ def separation(current_fish, separation_neighs):
     Calculates the new direction based on two fish that are too close to
     each other.
 
-    Miss iets van als afstand < dan iets --> richting naar dichtsbzijnde 90 graden hoek ???
+    Eig misschien calculate de opposite angle of neighbour en average het met eigen angle
 
 
     """
     if len(separation_neighs) == 0:
         return np.array([0, 0])
-    x_pos = [n[0] for n in separation_neighs]
-    y_pos = [n[1] for n in separation_neighs]
+    # x_pos = [n[0] for n in separation_neighs]
+    # y_pos = [n[1] for n in separation_neighs]
+    # if len(separation_neighs) != 0:
+    #     print(separation_neighs)
+    # print(separation_neighs)
 
-    mean_pos = np.array([np.mean(x_pos), np.mean(y_pos)])
-    current_pos = np.array(current_fish[:2])
 
-    # This flip of the subtraction ensures that all the fish move away from
-    # each other instead of towards each other like in the cohesion rule.
-    direction = current_pos - mean_pos
+    distances = [n[4] for n in separation_neighs]
+    idx = distances.index(min(distances))
+    nearest_neighbour = separation_neighs[idx]
 
+    nearest_neighbour = nearest_neighbour[:-1]
+
+
+    if nearest_neighbour[0] - current_fish[0] == 0.0:
+        angle = np.arctan((nearest_neighbour[1] - current_fish[1]) / 0.0001)
+    else:
+        angle = np.arctan((nearest_neighbour[1] - current_fish[1]) / (nearest_neighbour[0] - current_fish[0]))
+
+    # print(angle)
+
+    # print(current_fish[2])
+    print('')
+    test = np.array([np.cos(angle), np.sin(angle)])
+    print(test)
+
+    current_ang = np.array(current_fish[2:])
+
+    print(current_ang)
+
+    # new_angle = test - current_ang
+    new_angle = nearest_neighbour[2:] - current_ang
+    print(new_angle)
+    print('')
+
+
+
+
+
+
+
+
+
+
+    # neigh_cos = [n[2] for n in separation_neighs]
+    # neigh_sin = [n[3] for n in separation_neighs]
+    opposite_of_neigh_cos = [-1 * n[2] for n in separation_neighs]
+    opposite_of_neigh_sin = [-1 * n[3] for n in separation_neighs]
+
+
+    mean_angle_away = np.array([np.mean(opposite_of_neigh_cos), np.mean(opposite_of_neigh_sin)])
+
+
+    # mean_pos = np.array([np.mean(x_pos), np.mean(y_pos)])
+    # current_pos = np.array(current_fish[:2])
+
+    # # This flip of the subtraction ensures that all the fish move away from
+    # # each other instead of towards each other like in the cohesion rule.
+    # direction = current_pos - mean_pos
+
+    current_ang = np.array(current_fish[2:])
+
+
+    direction = current_ang - mean_angle_away
+
+
+    # direction = mean_angle_away - current_ang
     return direction
+    # return new_angle
 
 
 # @njit
@@ -96,85 +155,6 @@ def cohesion(current_fish, neighs):
     direction = mean_pos - current_pos
 
     return direction
-
-
-
-def random_direction(alter_velocity=False):
-    """
-    Returns a random direction.
-    """
-    angle = np.random.uniform() * 2 * np.pi  # direction in randians
-    velocity = 1
-    if alter_velocity:
-        velocity = np.random.uniform(0.5, 2)
-    return velocity * np.cos(angle), velocity * np.sin(angle)
-
-
-# @njit
-def simulate(fish):
-    """
-    For the simulation we will calculate the new positions in parallel to
-    ensure every update is based on the same iteration.
-    """
-    for i in range(len(fish)):
-        current_fish = fish[i]
-        neighs = get_neighs(fish, current_fish)
-        separation_neighs = get_neighs(fish, current_fish, SEPARATION_RANGE)
-
-        separation_dir = separation(current_fish, separation_neighs)
-
-        cohesion_dir = cohesion(current_fish, neighs)
-        alignment_dir = alignment(neighs)
-
-        # Calculate the new direction
-        new_direction = (cohesion_dir + alignment_dir + separation_dir) / 3
-
-        # Calculate the new position
-        new_pos = np.array(current_fish[:2]) + new_direction * 0.1
-
-        # Update the fish
-        fish[i] = [new_pos, new_direction, current_fish[2:]]
-
-
-def new_angle(pos, velocity, width, height):
-    """
-    Checks if a fish is outside the grid, if so, it calculates and returns a new direction for the fish. If not, it
-    simply returns the already calculated direction (velocity).
-    """
-    x, y = pos
-    a = 0
-    b = 0
-    # we move left: [0.5pi, 1.5pi]
-    if x > width:
-        a = 0.5 * np.pi
-        b = 1.5 * np.pi
-        # we move left and up: [0.5pi, pi]
-        if y < 0:
-            a = 0.5 * np.pi
-            b = np.pi
-        # we move left and down: [pi, 1.5pi]
-        elif y > height:
-            a = np.pi
-            b = 1.5 * np.pi
-    # we move right: [1.5pi, 2.5pi]
-    elif x < 0:
-        a = 1.5 * np.pi
-        b = 2.5 * np.pi
-        # we move right and up: [0, 0.5pi]
-        if y < 0:
-            a = 0
-            b = 0.5 * np.pi
-        # we move right and down: [1.5pi, 2pi]
-        elif y > height:
-            a = 1.5 * np.pi
-            b = 2 * np.pi
-    # we can simply use the current angle
-    else:
-        return velocity
-
-    angle = np.random.uniform(a, b)
-    return np.array([np.cos(angle), np.sin(angle)])
-
 
 class Model:
     def __init__(self, height=50, width=50, num_fish=100, fish_radius=0.5,
