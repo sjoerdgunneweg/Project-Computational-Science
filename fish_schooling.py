@@ -57,13 +57,18 @@ class Simulation(Model):
         self.padding = 0.2
 
         self.fish = self.spawn_fish()
+        self.loner_counter = []
 
     def get_random_position(self):
         x = np.random.uniform(self.padding, self.width - self.padding)
         y = np.random.uniform(self.padding, self.height - self.padding)
 
-        while (self.get_positioning(x, y) == 'lower_obstacle' or
-               self.get_positioning(x, y) == 'upper_obstacle'):
+        while (self.get_positioning(x - self.padding, y) == 'lower_obstacle' or
+               self.get_positioning(x, y - self.padding) == 'lower_obstacle' or
+               self.get_positioning(x + self.padding, y) == 'lower_obstacle' or
+               self.get_positioning(x - self.padding, y) == 'upper_obstacle' or
+               self.get_positioning(x, y + self.padding) == 'upper_obstacle' or
+               self.get_positioning(x + self.padding, y) == 'upper_obstacle'):
             x = np.random.uniform(self.padding, self.width - self.padding)
             y = np.random.uniform(self.padding, self.height - self.padding)
 
@@ -82,6 +87,8 @@ class Simulation(Model):
             new_fish = [*self.get_random_position(),
                         self.speed * np.cos(angle), self.speed * np.sin(angle)]
             fish.append(new_fish)
+
+        self.loner_counter = np.zeros(num_fish)
 
         return np.array(fish)
 
