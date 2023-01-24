@@ -53,11 +53,16 @@ class Simulation(Model):
         self.time = 0
         self.dt = 1 / 30  # 30 fps  # TODO?
 
+        # NOTE: obstacles should have the same xmin and xmax
         self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
         self.padding = 0.2
 
-        self.fish = self.spawn_fish()
         self.loner_counter = []
+        self.left_counter = []
+        self.right_counter = []
+        self.tunnel_counter = []
+
+        self.fish = self.spawn_fish()
 
     def get_random_position(self):
         x = np.random.uniform(self.padding, self.width - self.padding)
@@ -89,6 +94,9 @@ class Simulation(Model):
             fish.append(new_fish)
 
         self.loner_counter = np.zeros(num_fish)
+        self.left_counter = np.zeros(num_fish)
+        self.right_counter = np.zeros(num_fish)
+        self.tunnel_counter = np.zeros(num_fish)
 
         return np.array(fish)
 
@@ -113,23 +121,25 @@ class Simulation(Model):
 
         return np.array(neighbours)
 
-    def alignment(self, fish, current_fish):
+    def alignment(self, current_fish):
         """
         Aligns the fish with its neighbours.
         """
-        neighbours = self.get_neighbours(fish, current_fish,
+        neighbours = self.get_neighbours(self.fish, current_fish,
                                          self.alignment_radius)
 
         if len(neighbours) == 0:
+            # TODO: op andere plek ophogen?
+            self.loner_counter[np.where(self.fish == current_fish)[0][0]] += 1
             return np.array([0, 0], dtype=float)
 
         return np.mean(neighbours[:, VEL], axis=0) - current_fish[VEL]
 
-    def cohesion(self, fish, current_fish):
+    def cohesion(self, current_fish):
         """
         Moves the fish towards the mean position of its neighbours.
         """
-        neighbours = self.get_neighbours(fish, current_fish,
+        neighbours = self.get_neighbours(self.fish, current_fish,
                                          self.cohesion_radius)
 
         if len(neighbours) == 0:
@@ -138,11 +148,11 @@ class Simulation(Model):
         return (np.mean(neighbours[:, POS], axis=0) - current_fish[POS] -
                 current_fish[VEL])
 
-    def separation(self, fish, current_fish):
+    def separation(self, current_fish):
         """
         Moves the fish away from its neighbours.
         """
-        neighbours = self.get_neighbours(fish, current_fish,
+        neighbours = self.get_neighbours(self.fish, current_fish,
                                          self.separation_radius)
         new_vel = np.array([0, 0], dtype=float)
 
@@ -248,9 +258,10 @@ class Simulation(Model):
         f[VEL] += np.array([np.random.uniform(-0.75, 0.75),
                             np.random.uniform(-0.75, 0.75)])
 
-        alignment_vel = self.alignment(self.fish, f) * self.alignment_weight
-        cohesion_vel = self.cohesion(self.fish, f) * self.cohesion_weight
-        separation_vel = self.separation(self.fish, f) * self.separation_weight
+        # TODO: 1 radius?
+        alignment_vel = self.alignment(f) * self.alignment_weight
+        cohesion_vel = self.cohesion(f) * self.cohesion_weight
+        separation_vel = self.separation(f) * self.separation_weight
 
         f[VEL] += alignment_vel + cohesion_vel + separation_vel
 
@@ -258,10 +269,39 @@ class Simulation(Model):
         current_speed = np.sqrt(f[X_VEL]**2 + f[Y_VEL]**2)
         f[VEL] = f[VEL] / current_speed * self.speed
 
+    def update_position_counter(self, f):
+        if self.get_positioning(*f[POS]) == 'left':
+            self.left_counter[np.where(self.fish == f)[0][0]] += 1
+        elif self.get_positioning(*f[POS]) == 'right':
+            self.right_counter[np.where(self.fish == f)[0][0]] += 1
+        elif self.get_positioning(*f[POS]) == 'tunnel':
+            self.tunnel_counter[np.where(self.fish == f)[0][0]] += 1
+
+    def print_results(self):
+        num_timesteps = self.time / self.dt
+
+        loner_time = np.mean(self.loner_counter / num_timesteps) * 100
+        print(f'The fish were loners for {loner_time:.2f}% of the time.')
+
+        left_time = np.mean(self.left_counter / num_timesteps) * 100
+        print(f'The fish were on the left for {left_time:.2f}% of the time.')
+
+        right_time = np.mean(self.right_counter / num_timesteps) * 100
+        print(f'The fish were on the right for {right_time:.2f}% of the time.')
+
+        tunnel_time = np.mean(self.tunnel_counter / num_timesteps) * 100
+        print(f'The fish were in the tunnel for {tunnel_time:.2f}% '
+              'of the time.')
+
     def step(self):
+        # if self.time > 2:
+        #     self.print_results()
+        #     return True
+
         self.time += self.dt
 
         for f in self.fish:
+            self.update_position_counter(f)
             self.update_velocity(f)
             self.update_position(f)
 
@@ -293,7 +333,7 @@ if __name__ == '__main__':
     sim = Simulation(width=5,
                      height=5,
                      fish_density=1.0,
-                     speed=2,
+                     speed=3,
                      alignment_radius=0.5,
                      alignment_weight=0.6,
                      cohesion_radius=0.5,
