@@ -29,14 +29,14 @@ VEL = [X_VEL, Y_VEL]
 
 
 class Simulation(Model):
-    def __init__(self, width, height, num_fish, speed, alignment_radius,
+    def __init__(self, width, height, fish_density, speed, alignment_radius,
                  alignment_weight, cohesion_radius, cohesion_weight,
                  separation_radius, separation_weight):
         Model.__init__(self)
 
         self.make_param('width', width)
         self.make_param('height', height)
-        self.make_param('num_fish', num_fish)
+        self.make_param('fish_density', fish_density)
         self.make_param('speed', speed)
         self.make_param('alignment_radius', alignment_radius)
         self.make_param('alignment_weight', alignment_weight)
@@ -47,14 +47,15 @@ class Simulation(Model):
 
         self.time = 0
         self.dt = 1 / 30  # 30 fps  # TODO?
-        self.fish = self.spawn_fish(num_fish)
+        self.fish = self.spawn_fish()
 
-    def spawn_fish(self, num_fish):
+    def spawn_fish(self):
         """
         Spawns a number of fish in the model.
         The positions of the fish are uniformly distributed.
         """
         fish = []
+        num_fish = int(self.width * self.height * self.fish_density)
 
         for _ in range(num_fish):
             x = np.random.uniform() * self.width
@@ -177,13 +178,13 @@ class Simulation(Model):
 
     def reset(self):
         self.time = 0
-        self.fish = self.spawn_fish(self.num_fish)
+        self.fish = self.spawn_fish()
 
 
 if __name__ == '__main__':
     sim = Simulation(width=5,
                      height=5,
-                     num_fish=20,
+                     fish_density=1.0,
                      speed=2,
                      alignment_radius=0.5,
                      alignment_weight=0.6,
