@@ -42,11 +42,7 @@ def get_neighs(fish, current_fish, radius=NEIGH_RANGE):
         # Calculates the Euclidean distance
         distance = np.linalg.norm(np.array(current_fish[:2]) - np.array(f[:2]))
         if distance <= radius:
-            # neighs.append(f + [distance])
-            # test = f.append(distance)
-            # print(f)
             f = np.append(f, np.array([distance]))
-            # print(f)
             neighs.append(f)
 
     return neighs
@@ -62,7 +58,7 @@ def separation(current_fish, separation_neighs):
 
     """
     if len(separation_neighs) == 0:
-        return np.array([0, 0]) #vgm niet!!!!!!!!!!!!1
+        return np.array([0, 0])
     # x_pos = [n[0] for n in separation_neighs]
     # y_pos = [n[1] for n in separation_neighs]
     # if len(separation_neighs) != 0:
@@ -162,45 +158,9 @@ def cohesion(current_fish, neighs):
     mean_pos = np.array([np.mean(x_pos), np.mean(y_pos)])
     current_pos = np.array(current_fish[:2])
 
-
-    pos_dif = mean_pos - current_pos
-
-
-    # direction = mean_pos - current_pos
-
-    # angle between the 2 points
-    atan = np.arctan2(pos_dif[1], pos_dif[0])
-
-    direction = np.array([np.cos(atan), np.sin(atan)])
+    direction = mean_pos - current_pos
 
     return direction
-
-
-# # @njit
-# def simulate(fish):
-#     """
-#     For the simulation we will calculate the new positions in parallel to
-#     ensure every update is based on the same iteration.
-#     """
-#     for i in range(len(fish)):
-#         current_fish = fish[i]
-#         neighs = get_neighs(fish, current_fish)
-#         separation_neighs = get_neighs(fish, current_fish, SEPARATION_RANGE)
-
-#         separation_dir = separation(current_fish, separation_neighs)
-
-#         cohesion_dir = cohesion(current_fish, neighs)
-#         alignment_dir = alignment(neighs)
-
-#         # Calculate the new direction
-#         new_direction = (cohesion_dir + alignment_dir + separation_dir) / 3
-
-#         # Calculate the new position
-#         new_pos = np.array(current_fish[:2]) + new_direction * 0.1
-
-#         # Update the fish
-#         fish[i] = [new_pos, new_direction, current_fish[2:]]
-
 
 class Model:
     def __init__(self, height=50, width=50, num_fish=100, fish_radius=0.5,
