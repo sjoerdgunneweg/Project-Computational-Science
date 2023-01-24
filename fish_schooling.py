@@ -27,6 +27,11 @@ DIS = 4
 POS = [X_POS, Y_POS]
 VEL = [X_VEL, Y_VEL]
 
+XMIN = 0
+XMAX = 1
+YMIN = 2
+YMAX = 3
+
 
 class Simulation(Model):
     def __init__(self, width, height, fish_density, speed, alignment_radius,
@@ -49,6 +54,9 @@ class Simulation(Model):
         self.dt = 1 / 30  # 30 fps  # TODO?
         self.fish = self.spawn_fish()
 
+        self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
+        self.padding = 0.4
+
     def spawn_fish(self):
         """
         Spawns a number of fish in the model.
@@ -66,7 +74,6 @@ class Simulation(Model):
                         self.speed * np.cos(angle), self.speed * np.sin(angle)]
             fish.append(new_fish)
 
-        # fish = [[1.0, 1.0, -1.0, 0.0]]
         return np.array(fish)
 
     def get_neighbours(self, fish, current_fish, radius):
@@ -133,34 +140,84 @@ class Simulation(Model):
 
         return new_vel / len(neighbours) - current_fish[VEL]
 
+    def get_positioning(self, x, y):
+        if (0 < x < self.obstacles[0][XMIN] and 0 < y < self.height):
+            return 'left'
+        elif (self.obstacles[0][XMAX] < x < self.width and
+              0 < y < self.height):
+            return 'right'
+        elif (self.obstacles[0][XMIN] < x < self.obstacles[0][XMAX] and
+              self.obstacles[0][YMIN] < y < self.obstacles[0][YMAX]):
+            return 'lower_obstacle'
+        elif (self.obstacles[1][XMIN] < x < self.obstacles[1][XMAX] and
+              self.obstacles[1][YMIN] < y < self.obstacles[1][YMAX]):
+            return 'upper_obstacle'
+        elif (self.obstacles[0][XMIN] < x < self.obstacles[0][XMAX] and
+                self.obstacles[0][YMAX] < y < self.obstacles[1][YMIN]):
+            return 'tunnel'
+        else:
+            return 'outside'
+
     def update_position(self, f):
+        old_pos = f[POS]
         f[POS] += f[VEL] * self.dt
-        padding = 0.5
 
         # Left border
-        if f[X_POS] < padding:
+        if f[X_POS] < self.padding:
             # Random direction to the right
             angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
         # Right border
-        elif f[X_POS] > self.width - padding:
+        elif f[X_POS] > self.width - self.padding:
             # Random direction to the left
             angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
         # Top border
-        if f[Y_POS] < padding:
-            # Random direction down
+        if f[Y_POS] < self.padding:
+            # Random direction up
             angle = np.random.uniform(0, np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
         # Bottom border
-        elif f[Y_POS] > self.height - padding:
-            # Random direction up
+        elif f[Y_POS] > self.height - self.padding:
+            # Random direction down
             angle = np.random.uniform(np.pi, 2 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
+
+        if (self.get_positioning(*old_pos[POS]) == 'left' and
+                (self.get_positioning(f[X_POS] + self.padding,
+                                      f[Y_POS]) == 'lower_obstacle' or
+                 self.get_positioning(f[X_POS] + self.padding,
+                                      f[Y_POS]) == 'upper_obstacle')):
+            # Random direction to the left
+            angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
+            f[VEL] = np.array([self.speed * np.cos(angle),
+                               self.speed * np.sin(angle)])
+        elif (self.get_positioning(*old_pos[POS]) == 'right' and
+                (self.get_positioning(f[X_POS] - self.padding,
+                                      f[Y_POS]) == 'lower_obstacle' or
+                 self.get_positioning(f[X_POS] - self.padding,
+                                      f[Y_POS]) == 'upper_obstacle')):
+            # Random direction to the right
+            angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
+            f[VEL] = np.array([self.speed * np.cos(angle),
+                               self.speed * np.sin(angle)])
+        elif (self.get_positioning(*old_pos[POS]) == 'tunnel'):
+            if (self.get_positioning(f[X_POS], f[Y_POS] - self.padding)
+                    == 'lower_obstacle'):
+                # Random direction up
+                angle = np.random.uniform(0, np.pi)
+                f[VEL] = np.array([self.speed * np.cos(angle),
+                                   self.speed * np.sin(angle)])
+            elif (self.get_positioning(f[X_POS], f[Y_POS] + self.padding)
+                    == 'upper_obstacle'):
+                # Random direction down
+                angle = np.random.uniform(np.pi, 2 * np.pi)
+                f[VEL] = np.array([self.speed * np.cos(angle),
+                                   self.speed * np.sin(angle)])
 
     def update_velocity(self, f):
         # Randomly change the velocity
@@ -184,16 +241,24 @@ class Simulation(Model):
             self.update_velocity(f)
             self.update_position(f)
 
+    def draw_rect(self, xmin, xmax, ymin, ymax, color):
+        plt.fill([xmin, xmax, xmax, xmin],
+                 [ymin, ymin, ymax, ymax], color=color, edgecolor='black')
+
     def draw(self):
         plt.cla()
         plt.title(f'Time: {self.time:.2f}')
         plt.xlim(0, self.width)
         plt.ylim(0, self.height)
-        plt.fill([0, self.width, self.width, 0],
-                 [0, 0, self.height, self.height], color='cornflowerblue')
+
+        self.draw_rect(0, self.width, 0, self.height, 'cornflowerblue')
+
+        for obstacle in self.obstacles:
+            self.draw_rect(*obstacle, 'darkgray')
+
         plt.quiver(self.fish[:, X_POS], self.fish[:, Y_POS],
                    self.fish[:, X_VEL], self.fish[:, Y_VEL], color='white',
-                   width=0.01, headwidth=2, headlength=3)
+                   width=0.01, headwidth=2, headlength=3, pivot='mid')
 
     def reset(self):
         self.time = 0
