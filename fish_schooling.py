@@ -52,10 +52,22 @@ class Simulation(Model):
 
         self.time = 0
         self.dt = 1 / 30  # 30 fps  # TODO?
-        self.fish = self.spawn_fish()
 
         self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
-        self.padding = 0.4
+        self.padding = 0.2
+
+        self.fish = self.spawn_fish()
+
+    def get_random_position(self):
+        x = np.random.uniform(self.padding, self.width - self.padding)
+        y = np.random.uniform(self.padding, self.height - self.padding)
+
+        while (self.get_positioning(x, y) == 'lower_obstacle' or
+               self.get_positioning(x, y) == 'upper_obstacle'):
+            x = np.random.uniform(self.padding, self.width - self.padding)
+            y = np.random.uniform(self.padding, self.height - self.padding)
+
+        return x, y
 
     def spawn_fish(self):
         """
@@ -66,11 +78,8 @@ class Simulation(Model):
         num_fish = int(self.width * self.height * self.fish_density)
 
         for _ in range(num_fish):
-            x = np.random.uniform() * self.width
-            y = np.random.uniform() * self.height
-
             angle = np.random.uniform() * 2 * np.pi
-            new_fish = [x, y,
+            new_fish = [*self.get_random_position(),
                         self.speed * np.cos(angle), self.speed * np.sin(angle)]
             fish.append(new_fish)
 
@@ -168,24 +177,28 @@ class Simulation(Model):
             angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
+            f[POS] = old_pos
         # Right border
         elif f[X_POS] > self.width - self.padding:
             # Random direction to the left
             angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
+            f[POS] = old_pos
         # Top border
         if f[Y_POS] < self.padding:
             # Random direction up
             angle = np.random.uniform(0, np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
+            f[POS] = old_pos
         # Bottom border
         elif f[Y_POS] > self.height - self.padding:
             # Random direction down
             angle = np.random.uniform(np.pi, 2 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
+            f[POS] = old_pos
 
         if (self.get_positioning(*old_pos[POS]) == 'left' and
                 (self.get_positioning(f[X_POS] + self.padding,
@@ -196,6 +209,7 @@ class Simulation(Model):
             angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
+            f[POS] = old_pos
         elif (self.get_positioning(*old_pos[POS]) == 'right' and
                 (self.get_positioning(f[X_POS] - self.padding,
                                       f[Y_POS]) == 'lower_obstacle' or
@@ -205,6 +219,7 @@ class Simulation(Model):
             angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
             f[VEL] = np.array([self.speed * np.cos(angle),
                                self.speed * np.sin(angle)])
+            f[POS] = old_pos
         elif (self.get_positioning(*old_pos[POS]) == 'tunnel'):
             if (self.get_positioning(f[X_POS], f[Y_POS] - self.padding)
                     == 'lower_obstacle'):
@@ -212,12 +227,14 @@ class Simulation(Model):
                 angle = np.random.uniform(0, np.pi)
                 f[VEL] = np.array([self.speed * np.cos(angle),
                                    self.speed * np.sin(angle)])
+                f[POS] = old_pos
             elif (self.get_positioning(f[X_POS], f[Y_POS] + self.padding)
                     == 'upper_obstacle'):
                 # Random direction down
                 angle = np.random.uniform(np.pi, 2 * np.pi)
                 f[VEL] = np.array([self.speed * np.cos(angle),
                                    self.speed * np.sin(angle)])
+                f[POS] = old_pos
 
     def update_velocity(self, f):
         # Randomly change the velocity
