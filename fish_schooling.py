@@ -15,7 +15,7 @@ different time steps and a function to visualize these timesteps.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pyics import Model, GUI
+from pyics import Model, GUI, paramsweep
 # import numba as nb
 
 X_POS = 0
@@ -56,11 +56,17 @@ class Simulation(Model):
         # NOTE: obstacles should have the same xmin and xmax
         self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
         self.padding = 0.2
+        self.end_time = 2
 
         self.loner_counter = []
         self.left_counter = []
         self.right_counter = []
         self.tunnel_counter = []
+
+        self.loner_time = 0
+        self.left_time = 0
+        self.right_time = 0
+        self.tunnel_time = 0
 
         self.fish = self.spawn_fish()
 
@@ -73,7 +79,10 @@ class Simulation(Model):
                self.get_positioning(x + self.padding, y) == 'lower_obstacle' or
                self.get_positioning(x - self.padding, y) == 'upper_obstacle' or
                self.get_positioning(x, y + self.padding) == 'upper_obstacle' or
-               self.get_positioning(x + self.padding, y) == 'upper_obstacle'):
+               self.get_positioning(x + self.padding, y) == 'upper_obstacle'
+            #    or self.get_positioning(x, y) != 'left'
+            #    or self.get_positioning(x, y) != 'tunnel'
+               ):
             x = np.random.uniform(self.padding, self.width - self.padding)
             y = np.random.uniform(self.padding, self.height - self.padding)
 
@@ -277,33 +286,28 @@ class Simulation(Model):
         elif self.get_positioning(*f[POS]) == 'tunnel':
             self.tunnel_counter[np.where(self.fish == f)[0][0]] += 1
 
-    def print_results(self):
+    def calculate_times(self):
         num_timesteps = self.time / self.dt
 
-        loner_time = np.mean(self.loner_counter / num_timesteps) * 100
-        print(f'The fish were loners for {loner_time:.2f}% of the time.')
-
-        left_time = np.mean(self.left_counter / num_timesteps) * 100
-        print(f'The fish were on the left for {left_time:.2f}% of the time.')
-
-        right_time = np.mean(self.right_counter / num_timesteps) * 100
-        print(f'The fish were on the right for {right_time:.2f}% of the time.')
-
-        tunnel_time = np.mean(self.tunnel_counter / num_timesteps) * 100
-        print(f'The fish were in the tunnel for {tunnel_time:.2f}% '
-              'of the time.')
+        self.loner_time = np.mean(self.loner_counter / num_timesteps) * 100
+        self.left_time = np.mean(self.left_counter / num_timesteps) * 100
+        self.right_time = np.mean(self.right_counter / num_timesteps) * 100
+        self.tunnel_time = np.mean(self.tunnel_counter / num_timesteps) * 100
 
     def step(self):
-        # if self.time > 2:
-        #     self.print_results()
-        #     return True
-
         self.time += self.dt
+
+        # if self.time > self.end_time:
+        #     return True
 
         for f in self.fish:
             self.update_position_counter(f)
             self.update_velocity(f)
             self.update_position(f)
+
+        # Calculate at the last timestep
+        if len(self.fish) > 0 and self.time > self.end_time - self.dt:
+            self.calculate_times()
 
     def draw_rect(self, xmin, xmax, ymin, ymax, color):
         plt.fill([xmin, xmax, xmax, xmin],
@@ -326,6 +330,10 @@ class Simulation(Model):
 
     def reset(self):
         self.time = 0
+        self.loner_time = 0
+        self.left_time = 0
+        self.right_time = 0
+        self.tunnel_time = 0
         self.fish = self.spawn_fish()
 
 
@@ -342,3 +350,17 @@ if __name__ == '__main__':
                      separation_weight=0.2)
     gui = GUI(sim)
     gui.start()
+
+
+    # num_runs = 2
+    # density_range = np.linspace(0, 1, 11)
+
+    # paramsweep(sim, num_runs,
+    #            {'width': 5, 'height': 5,
+    #             'fish_density': density_range,
+    #             'speed': 3,
+    #             'alignment_radius': 0.5, 'alignment_weight': 0.6,
+    #             'cohesion_radius': 0.5, 'cohesion_weight': 0.2,
+    #             'separation_radius': 0.4, 'separation_weight': 0.2},
+    #            ['loner_time'],
+    #            csv_base_filename='results')
