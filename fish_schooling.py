@@ -127,6 +127,7 @@ class Simulation(Model):
 
         for n in neighbours:
             if n[DIS] != 0:
+                # TODO: optimize
                 new_vel += (current_fish[POS] - n[POS]) / n[DIS]**2
 
         return new_vel / len(neighbours) - current_fish[VEL]
@@ -172,9 +173,12 @@ class Simulation(Model):
         plt.xlim(0, self.width)
         plt.ylim(0, self.height)
         plt.fill([0, self.width, self.width, 0],
-                 [0, 0, self.height, self.height], color='deepskyblue')
-        plt.plot(self.fish[:, X_POS], sim.fish[:, Y_POS], 'o', color='white',
-                 ms=5)
+                 [0, 0, self.height, self.height], color='cornflowerblue')
+        # plt.plot(self.fish[:, X_POS], self.fish[:, Y_POS], 'o', color='white',
+        #          ms=5)
+        plt.quiver(self.fish[:, X_POS], self.fish[:, Y_POS],
+                   self.fish[:, X_VEL], self.fish[:, Y_VEL], color='white',
+                   width=0.01, headwidth=2, headlength=3)
 
     def reset(self):
         self.time = 0
