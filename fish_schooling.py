@@ -41,7 +41,7 @@ class Simulation(Model):
     def __init__(self,
                  width=5,
                  height=5,
-                 fish_density=1.0,
+                 num_fish=25,
                  speed=2,
                  alignment_radius=0.5,
                  alignment_weight=0.5,
@@ -54,7 +54,7 @@ class Simulation(Model):
 
         self.make_param('width', width)
         self.make_param('height', height)
-        self.make_param('fish_density', fish_density)
+        self.make_param('num_fish', num_fish)
         self.make_param('speed', speed)
         self.make_param('alignment_radius', alignment_radius)
         self.make_param('alignment_weight', alignment_weight)
@@ -72,10 +72,10 @@ class Simulation(Model):
         self.padding = 0.2
         self.experiment = experiment
 
-        self.loner_counter = []
-        self.left_counter = []
-        self.right_counter = []
-        self.tunnel_counter = []
+        self.loner_counter = np.zeros(num_fish)
+        self.left_counter = np.zeros(num_fish)
+        self.right_counter = np.zeros(num_fish)
+        self.tunnel_counter = np.zeros(num_fish)
 
         self.loner_time = 0
         self.left_time = 0
@@ -110,18 +110,12 @@ class Simulation(Model):
         The positions of the fish are uniformly distributed.
         """
         fish = []
-        num_fish = int(self.width * self.height * self.fish_density)
 
-        for _ in range(num_fish):
+        for _ in range(self.num_fish):
             angle = np.random.uniform() * 2 * np.pi
             new_fish = [*self.get_random_position(),
                         self.speed * np.cos(angle), self.speed * np.sin(angle)]
             fish.append(new_fish)
-
-        self.loner_counter = np.zeros(num_fish)
-        self.left_counter = np.zeros(num_fish)
-        self.right_counter = np.zeros(num_fish)
-        self.tunnel_counter = np.zeros(num_fish)
 
         return np.array(fish)
 
@@ -370,17 +364,23 @@ class Simulation(Model):
         self.left_time = 0
         self.right_time = 0
         self.tunnel_time = 0
+
+        self.loner_counter = np.zeros(self.num_fish)
+        self.left_counter = np.zeros(self.num_fish)
+        self.right_counter = np.zeros(self.num_fish)
+        self.tunnel_counter = np.zeros(self.num_fish)
+
         self.num_clusters = 0
         self.fish = self.spawn_fish()
 
 
 def experiment():
-    num_runs = 1
-    density_range = np.linspace(0, 1, 11)
+    num_runs = 2
+    num_fish = np.arange(0, 55, 5)
 
     paramsweep(sim, num_runs,
                {'width': 5, 'height': 5,
-                'fish_density': density_range,
+                'num_fish': num_fish,
                 'speed': 3,
                 'alignment_radius': 0.5, 'alignment_weight': 0.6,
                 'cohesion_radius': 0.5, 'cohesion_weight': 0.2,
