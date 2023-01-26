@@ -264,8 +264,9 @@ class Simulation(Model):
 
     def update_velocity(self, f):
         # Randomly change the velocity
-        f[VEL] += np.array([np.random.uniform(-0.75, 0.75),
-                            np.random.uniform(-0.75, 0.75)])
+        current_angle = np.arctan2(f[Y_VEL], f[X_VEL])
+        new_angle = np.random.normal(current_angle, 0.5 * np.pi)
+        f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
 
         # TODO: 1 radius?
         alignment_vel = self.alignment(f) * self.alignment_weight
