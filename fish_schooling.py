@@ -130,8 +130,7 @@ class Simulation(Model):
 
         for f in fish:
             # Don't include itself
-            # if np.array_equal(f, current_fish):
-            if (f == current_fish).all():
+            if f.all() == current_fish.all():
                 continue
 
             # Calculate the Euclidean distance
