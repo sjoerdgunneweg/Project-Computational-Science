@@ -49,6 +49,7 @@ class Simulation(Model):
                  cohesion_weight=0.2,
                  separation_radius=0.2,
                  separation_weight=0.3,
+                 spawn_location='random',
                  padding=0.2,
                  tunnel_width=2,
                  tunnel_height=2,
@@ -72,6 +73,7 @@ class Simulation(Model):
         self.make_param('separation_weight', separation_weight)
         self.make_param('tunnel_width', tunnel_width)
         self.make_param('tunnel_height', tunnel_height)
+        self.make_param('spawn_location', spawn_location)
 
         self.time = 0
         self.end_time = end_time
@@ -80,6 +82,8 @@ class Simulation(Model):
         self.direction_change_period = direction_change_period
         self.cluster_period = cluster_period
         self.num_clusters = 0
+        self.padding = padding
+        self.experiment = experiment
 
         # NOTE: obstacles should have the same xmin and xmax
         self.obstacles = [
@@ -87,8 +91,6 @@ class Simulation(Model):
              0, (height - tunnel_height) / 2],
             [(width - tunnel_width) / 2, (width + tunnel_width) / 2,
              (height + tunnel_height) / 2, height]]
-        self.padding = padding
-        self.experiment = experiment
 
         self.loner_counter = np.zeros(num_fish)
         self.left_counter = np.zeros(num_fish)
@@ -102,21 +104,34 @@ class Simulation(Model):
 
         self.fish = self.spawn_fish()
 
+    def on_obstacle(self, x, y):
+        """
+        Checks if the given position is on an obstacle (or in its padding).
+        There are six cases to check.
+        """
+        return (
+            self.get_positioning(x - self.padding, y) == 'lower_obstacle' or
+            self.get_positioning(x, y - self.padding) == 'lower_obstacle' or
+            self.get_positioning(x + self.padding, y) == 'lower_obstacle' or
+            self.get_positioning(x - self.padding, y) == 'upper_obstacle' or
+            self.get_positioning(x, y + self.padding) == 'upper_obstacle' or
+            self.get_positioning(x + self.padding, y) == 'upper_obstacle')
+
     def get_random_position(self):
         x = np.random.uniform(self.padding, self.width - self.padding)
         y = np.random.uniform(self.padding, self.height - self.padding)
 
-        while (self.get_positioning(x - self.padding, y) == 'lower_obstacle' or
-               self.get_positioning(x, y - self.padding) == 'lower_obstacle' or
-               self.get_positioning(x + self.padding, y) == 'lower_obstacle' or
-               self.get_positioning(x - self.padding, y) == 'upper_obstacle' or
-               self.get_positioning(x, y + self.padding) == 'upper_obstacle' or
-               self.get_positioning(x + self.padding, y) == 'upper_obstacle'
-            #    or self.get_positioning(x, y) != 'left'
-            #    or self.get_positioning(x, y) != 'tunnel'
-               ):
-            x = np.random.uniform(self.padding, self.width - self.padding)
-            y = np.random.uniform(self.padding, self.height - self.padding)
+        if self.spawn_location == 'random':
+            # Prevent fish from spawning on obstacles
+            while (self.on_obstacle(x, y)):
+                x = np.random.uniform(self.padding, self.width - self.padding)
+                y = np.random.uniform(self.padding, self.height - self.padding)
+        else:
+            # Spawn fish on the given location
+            while (self.on_obstacle(x, y) or
+                   self.get_positioning(x, y) != self.spawn_location):
+                x = np.random.uniform(self.padding, self.width - self.padding)
+                y = np.random.uniform(self.padding, self.height - self.padding)
 
         return x, y
 
