@@ -15,6 +15,8 @@ different time steps and a function to visualize these timesteps.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 from pyics import Model, GUI, paramsweep
 # import numba as nb
 import sys
@@ -79,6 +81,8 @@ class Simulation(Model):
         self.left_time = 0
         self.right_time = 0
         self.tunnel_time = 0
+
+        self.num_clusters = 0
 
         self.fish = self.spawn_fish()
 
@@ -311,6 +315,18 @@ class Simulation(Model):
         self.right_time = np.mean(self.right_counter / self.time) * 100
         self.tunnel_time = np.mean(self.tunnel_counter / self.time) * 100
 
+    def get_num_clusters(self):
+        if len(self.fish) > 2:
+            clusters = np.arange(2, len(self.fish))
+            scores = np.zeros(len(clusters))
+            positions = self.fish[:, POS]
+
+            for i, k in enumerate(clusters):
+                kmeans = KMeans(n_clusters=k, n_init=10).fit(positions)
+                scores[i] = silhouette_score(positions, kmeans.labels_)
+
+            self.num_clusters = clusters[np.argmax(scores)]
+
     def step(self):
         self.time += self.timestep
 
@@ -324,8 +340,10 @@ class Simulation(Model):
             self.update_position(i)
 
         # Calculate at the last timestep
-        if len(self.fish) > 0 and self.time > self.end_time - self.timestep:
+        if (self.experiment and len(self.fish) > 0 and
+                self.time > self.end_time - self.timestep):
             self.calculate_times()
+            self.get_num_clusters()
 
     def draw_rect(self, xmin, xmax, ymin, ymax, color):
         plt.fill([xmin, xmax, xmax, xmin],
@@ -352,11 +370,12 @@ class Simulation(Model):
         self.left_time = 0
         self.right_time = 0
         self.tunnel_time = 0
+        self.num_clusters = 0
         self.fish = self.spawn_fish()
 
 
 def experiment():
-    num_runs = 2
+    num_runs = 1
     density_range = np.linspace(0, 1, 11)
 
     paramsweep(sim, num_runs,
@@ -366,7 +385,7 @@ def experiment():
                 'alignment_radius': 0.5, 'alignment_weight': 0.6,
                 'cohesion_radius': 0.5, 'cohesion_weight': 0.2,
                 'separation_radius': 0.4, 'separation_weight': 0.2},
-               ['loner_time'],
+               ['num_clusters'],
                csv_base_filename='results')
 
 
