@@ -40,7 +40,7 @@ class Simulation(Model):
                  width=5,
                  height=5,
                  fish_density=1.0,
-                 speed=3,
+                 speed=2,
                  alignment_radius=0.5,
                  alignment_weight=0.6,
                  cohesion_radius=0.5,
@@ -62,12 +62,12 @@ class Simulation(Model):
         self.make_param('separation_weight', separation_weight)
 
         self.time = 0
-        self.dt = 1 / 30  # 30 fps  # TODO?
+        self.end_time = 100
+        self.timestep = 1
 
         # NOTE: obstacles should have the same xmin and xmax
         self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
         self.padding = 0.2
-        self.end_time = 2
         self.experiment = experiment
 
         self.loner_counter = []
@@ -130,7 +130,8 @@ class Simulation(Model):
 
         for f in fish:
             # Don't include itself
-            if np.array_equal(f, current_fish):
+            # if np.array_equal(f, current_fish):
+            if (f == current_fish).all():
                 continue
 
             # Calculate the Euclidean distance
@@ -207,7 +208,7 @@ class Simulation(Model):
 
     def update_position(self, f):
         old_pos = f[POS]
-        f[POS] += f[VEL] * self.dt
+        f[POS] += f[VEL] * 0.05  # To prevent fish from going too fast
 
         # Left border
         if f[X_POS] < self.padding:
@@ -300,15 +301,13 @@ class Simulation(Model):
             self.tunnel_counter[np.where(self.fish == f)[0][0]] += 1
 
     def calculate_times(self):
-        num_timesteps = self.time / self.dt
-
-        self.loner_time = np.mean(self.loner_counter / num_timesteps) * 100
-        self.left_time = np.mean(self.left_counter / num_timesteps) * 100
-        self.right_time = np.mean(self.right_counter / num_timesteps) * 100
-        self.tunnel_time = np.mean(self.tunnel_counter / num_timesteps) * 100
+        self.loner_time = np.mean(self.loner_counter / self.time) * 100
+        self.left_time = np.mean(self.left_counter / self.time) * 100
+        self.right_time = np.mean(self.right_counter / self.time) * 100
+        self.tunnel_time = np.mean(self.tunnel_counter / self.time) * 100
 
     def step(self):
-        self.time += self.dt
+        self.time += self.timestep
 
         if self.experiment and self.time > self.end_time:
             return True
@@ -319,7 +318,7 @@ class Simulation(Model):
             self.update_position(f)
 
         # Calculate at the last timestep
-        if len(self.fish) > 0 and self.time > self.end_time - self.dt:
+        if len(self.fish) > 0 and self.time > self.end_time - self.timestep:
             self.calculate_times()
 
     def draw_rect(self, xmin, xmax, ymin, ymax, color):
@@ -328,7 +327,7 @@ class Simulation(Model):
 
     def draw(self):
         plt.cla()
-        plt.title(f'Time: {self.time:.2f}')
+        plt.title(f'Time: {self.time}')
         plt.xlim(0, self.width)
         plt.ylim(0, self.height)
 
