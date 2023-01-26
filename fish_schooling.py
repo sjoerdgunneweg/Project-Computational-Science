@@ -42,11 +42,11 @@ class Simulation(Model):
                  fish_density=1.0,
                  speed=2,
                  alignment_radius=0.5,
-                 alignment_weight=0.6,
+                 alignment_weight=0.5,
                  cohesion_radius=0.5,
                  cohesion_weight=0.2,
-                 separation_radius=0.4,
-                 separation_weight=0.2,
+                 separation_radius=0.2,
+                 separation_weight=0.3,
                  experiment=False):
         Model.__init__(self)
 
