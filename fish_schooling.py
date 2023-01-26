@@ -39,10 +39,10 @@ YMAX = 3
 
 class Simulation(Model):
     def __init__(self,
-                 width=5,
-                 height=5,
+                 width=5.0,
+                 height=5.0,
                  num_fish=25,
-                 speed=2,
+                 speed=2.0,
                  alignment_radius=0.5,
                  alignment_weight=0.5,
                  cohesion_radius=0.5,
@@ -51,8 +51,8 @@ class Simulation(Model):
                  separation_weight=0.3,
                  spawn_location='random',
                  padding=0.2,
-                 tunnel_width=2,
-                 tunnel_height=2,
+                 tunnel_width=2.0,
+                 tunnel_height=2.0,
                  direction_change_period=5,
                  experiment=False,
                  end_time=100,
@@ -408,28 +408,29 @@ class Simulation(Model):
         self.fish = self.spawn_fish()
 
 
-def experiment():
-    num_runs = 2
+def experiment(filename='results'):
+    num_runs = 10
     num_fish = np.arange(0, 55, 5)
 
     paramsweep(sim, num_runs,
-               {'width': 5, 'height': 5,
-                'num_fish': num_fish,
-                'speed': 3,
-                'alignment_radius': 0.5, 'alignment_weight': 0.6,
-                'cohesion_radius': 0.5, 'cohesion_weight': 0.2,
-                'separation_radius': 0.4, 'separation_weight': 0.2},
-               ['num_clusters'],
-               csv_base_filename='results')
+               {'num_fish': num_fish},
+               ['num_clusters', 'loner_time', 'left_time', 'right_time',
+                'tunnel_time'],
+               csv_base_filename=f'results/{filename}')
 
 
 if __name__ == '__main__':
     sim = Simulation()
 
     if len(sys.argv) > 1 and sys.argv[1] == '--experiment':
-        sim.experiment = True
         start = time.time()
-        experiment()
+        sim.experiment = True
+
+        if len(sys.argv) > 2:
+            experiment(filename=sys.argv[2])
+        else:
+            experiment()
+
         print(f'Experiment took {(time.time() - start):.2f} seconds')
     else:
         gui = GUI(sim)
