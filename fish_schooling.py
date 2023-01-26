@@ -150,7 +150,6 @@ class Simulation(Model):
                                          self.alignment_radius)
 
         if neighbours.size == 0:
-            # TODO: op andere plek ophogen?
             self.loner_counter[np.where(self.fish == current_fish)[0][0]] += 1
             return np.array([0, 0], dtype=float)
 
@@ -280,7 +279,6 @@ class Simulation(Model):
         new_angle = np.random.normal(current_angle, 0.5 * np.pi)
         f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
 
-        # TODO: 1 radius?
         alignment_vel = self.alignment(f) * self.alignment_weight
         cohesion_vel = self.cohesion(f) * self.cohesion_weight
         separation_vel = self.separation(f) * self.separation_weight
