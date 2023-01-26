@@ -6,6 +6,7 @@
 import csv
 import itertools
 import numpy
+from tqdm import tqdm
 
 try:
     # Python 2
@@ -86,7 +87,7 @@ def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
     combinations = tuple(itertools.product(*param_values))
     measurements = [[] for a in measure_attrs]
     # Iterate over all combinations of parameter values
-    for vals in combinations:
+    for vals in tqdm(combinations, desc='Parameters'):
         # Set current parameter values to the model
         for pn, pv in zip(param_names, vals):
             if pn not in model.params:
@@ -95,7 +96,7 @@ def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
             setattr(model, pn, pv)
 
         # Perform simulations requested amount of times with current params.
-        for r in range(repetitions):
+        for r in tqdm(range(repetitions), desc='Repetitions', leave=False):
             model.reset()
             current_iter = 0
             if measure_interval:
