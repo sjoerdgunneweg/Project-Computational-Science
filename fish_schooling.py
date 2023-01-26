@@ -49,7 +49,15 @@ class Simulation(Model):
                  cohesion_weight=0.2,
                  separation_radius=0.2,
                  separation_weight=0.3,
-                 experiment=False):
+                 padding=0.2,
+                 tunnel_width=2,
+                 tunnel_height=2,
+                 direction_change_period=5,
+                 experiment=False,
+                 end_time=100,
+                 timestep=1,
+                 cluster_period=5
+                 ):
         Model.__init__(self)
 
         self.make_param('width', width)
@@ -62,14 +70,24 @@ class Simulation(Model):
         self.make_param('cohesion_weight', cohesion_weight)
         self.make_param('separation_radius', separation_radius)
         self.make_param('separation_weight', separation_weight)
+        self.make_param('tunnel_width', tunnel_width)
+        self.make_param('tunnel_height', tunnel_height)
 
         self.time = 0
-        self.end_time = 100
-        self.timestep = 1
+        self.end_time = end_time
+        self.timestep = timestep
+
+        self.direction_change_period = direction_change_period
+        self.cluster_period = cluster_period
+        self.num_clusters = 0
 
         # NOTE: obstacles should have the same xmin and xmax
-        self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
-        self.padding = 0.2
+        self.obstacles = [
+            [(width - tunnel_width) / 2, (width + tunnel_width) / 2,
+             0, (height - tunnel_height) / 2],
+            [(width - tunnel_width) / 2, (width + tunnel_width) / 2,
+             (height + tunnel_height) / 2, height]]
+        self.padding = padding
         self.experiment = experiment
 
         self.loner_counter = np.zeros(num_fish)
@@ -81,8 +99,6 @@ class Simulation(Model):
         self.left_time = 0
         self.right_time = 0
         self.tunnel_time = 0
-
-        self.num_clusters = 0
 
         self.fish = self.spawn_fish()
 
@@ -278,10 +294,11 @@ class Simulation(Model):
     def update_velocity(self, i):
         f = self.fish[i]
 
-        # Randomly change the velocity
-        current_angle = np.arctan2(f[Y_VEL], f[X_VEL])
-        new_angle = np.random.normal(current_angle, 0.5 * np.pi)
-        f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
+        # Randomly change the velocity a certain period
+        if self.time % self.direction_change_period == 0:
+            current_angle = np.arctan2(f[Y_VEL], f[X_VEL])
+            new_angle = np.random.normal(current_angle, 0.5 * np.pi)
+            f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
 
         alignment_vel = self.alignment(i) * self.alignment_weight
         cohesion_vel = self.cohesion(i) * self.cohesion_weight
@@ -311,7 +328,7 @@ class Simulation(Model):
 
     def get_num_clusters(self):
         if len(self.fish) > 2:
-            clusters = np.arange(2, len(self.fish))
+            clusters = np.arange(2, min(11, len(self.fish)))  # TODO: tot len(self.fish)?
             scores = np.zeros(len(clusters))
             positions = self.fish[:, POS]
 
@@ -333,11 +350,13 @@ class Simulation(Model):
             self.update_velocity(i)
             self.update_position(i)
 
+        if self.experiment and self.time % self.cluster_period == 0:
+            self.get_num_clusters()
+
         # Calculate at the last timestep
         if (self.experiment and len(self.fish) > 0 and
                 self.time > self.end_time - self.timestep):
             self.calculate_times()
-            self.get_num_clusters()
 
     def draw_rect(self, xmin, xmax, ymin, ymax, color):
         plt.fill([xmin, xmax, xmax, xmin],
@@ -351,8 +370,9 @@ class Simulation(Model):
 
         self.draw_rect(0, self.width, 0, self.height, 'cornflowerblue')
 
-        for obstacle in self.obstacles:
-            self.draw_rect(*obstacle, 'darkgray')
+        if self.tunnel_width > 0 and self.tunnel_height > 0:
+            for obstacle in self.obstacles:
+                self.draw_rect(*obstacle, 'darkgray')
 
         plt.quiver(self.fish[:, X_POS], self.fish[:, Y_POS],
                    self.fish[:, X_VEL], self.fish[:, Y_VEL], color='white',
@@ -369,6 +389,17 @@ class Simulation(Model):
         self.left_counter = np.zeros(self.num_fish)
         self.right_counter = np.zeros(self.num_fish)
         self.tunnel_counter = np.zeros(self.num_fish)
+
+        self.obstacles = [
+            [(self.width - self.tunnel_width) / 2,
+             (self.width + self.tunnel_width) / 2,
+             0, (self.height - self.tunnel_height) / 2],
+            [(self.width - self.tunnel_width) / 2,
+             (self.width + self.tunnel_width) / 2,
+             (self.height + self.tunnel_height) / 2, self.height]]
+
+        if self.tunnel_width == 0 or self.tunnel_height == 0:
+            self.obstacles = np.zeros((2, 4))
 
         self.num_clusters = 0
         self.fish = self.spawn_fish()
