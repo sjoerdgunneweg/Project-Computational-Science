@@ -17,6 +17,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pyics import Model, GUI, paramsweep
 # import numba as nb
+import sys
+import time
 
 X_POS = 0
 Y_POS = 1
@@ -34,9 +36,18 @@ YMAX = 3
 
 
 class Simulation(Model):
-    def __init__(self, width, height, fish_density, speed, alignment_radius,
-                 alignment_weight, cohesion_radius, cohesion_weight,
-                 separation_radius, separation_weight):
+    def __init__(self,
+                 width=5,
+                 height=5,
+                 fish_density=1.0,
+                 speed=3,
+                 alignment_radius=0.5,
+                 alignment_weight=0.6,
+                 cohesion_radius=0.5,
+                 cohesion_weight=0.2,
+                 separation_radius=0.4,
+                 separation_weight=0.2,
+                 experiment=False):
         Model.__init__(self)
 
         self.make_param('width', width)
@@ -57,6 +68,7 @@ class Simulation(Model):
         self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
         self.padding = 0.2
         self.end_time = 2
+        self.experiment = experiment
 
         self.loner_counter = []
         self.left_counter = []
@@ -298,8 +310,8 @@ class Simulation(Model):
     def step(self):
         self.time += self.dt
 
-        # if self.time > self.end_time:
-        #     return True
+        if self.experiment and self.time > self.end_time:
+            return True
 
         for f in self.fish:
             self.update_position_counter(f)
@@ -338,30 +350,29 @@ class Simulation(Model):
         self.fish = self.spawn_fish()
 
 
+def experiment():
+    num_runs = 2
+    density_range = np.linspace(0, 1, 11)
+
+    paramsweep(sim, num_runs,
+               {'width': 5, 'height': 5,
+                'fish_density': density_range,
+                'speed': 3,
+                'alignment_radius': 0.5, 'alignment_weight': 0.6,
+                'cohesion_radius': 0.5, 'cohesion_weight': 0.2,
+                'separation_radius': 0.4, 'separation_weight': 0.2},
+               ['loner_time'],
+               csv_base_filename='results')
+
+
 if __name__ == '__main__':
-    sim = Simulation(width=5,
-                     height=5,
-                     fish_density=1.0,
-                     speed=3,
-                     alignment_radius=0.5,
-                     alignment_weight=0.6,
-                     cohesion_radius=0.5,
-                     cohesion_weight=0.2,
-                     separation_radius=0.4,
-                     separation_weight=0.2)
-    gui = GUI(sim)
-    gui.start()
+    sim = Simulation()
 
-
-    # num_runs = 2
-    # density_range = np.linspace(0, 1, 11)
-
-    # paramsweep(sim, num_runs,
-    #            {'width': 5, 'height': 5,
-    #             'fish_density': density_range,
-    #             'speed': 3,
-    #             'alignment_radius': 0.5, 'alignment_weight': 0.6,
-    #             'cohesion_radius': 0.5, 'cohesion_weight': 0.2,
-    #             'separation_radius': 0.4, 'separation_weight': 0.2},
-    #            ['loner_time'],
-    #            csv_base_filename='results')
+    if len(sys.argv) > 1 and sys.argv[1] == '--experiment':
+        sim.experiment = True
+        start = time.time()
+        experiment()
+        print(f'Experiment took {(time.time() - start):.2f} seconds')
+    else:
+        gui = GUI(sim)
+        gui.start()
