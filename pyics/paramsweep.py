@@ -118,7 +118,7 @@ def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
     if csv_base_filename is not None:
         # Dump results to csv files: one per measurement, row per run
         for i, m in enumerate(measurements):
-            with open('%s_%d.csv' % (csv_base_filename, i), 'w') as f:
+            with open('%s_%s.csv' % (csv_base_filename, measure_attrs[i]), 'w') as f:
                 writer = csv.writer(f)
                 writer.writerow(param_names + ["rep_num"])
                 for j, n in enumerate(m):
