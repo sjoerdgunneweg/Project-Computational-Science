@@ -221,6 +221,12 @@ class Simulation(Model):
         else:
             return 'outside'
 
+    def correct_position_and_velocity(self, f, a, b, old_pos):
+        angle = np.random.uniform(a, b)
+        f[VEL] = np.array([self.speed * np.cos(angle),
+                           self.speed * np.sin(angle)])
+        f[POS] = old_pos
+
     def update_position(self, i):
         f = self.fish[i]
         old_pos = f[POS]
@@ -229,31 +235,22 @@ class Simulation(Model):
         # Left border
         if f[X_POS] < self.padding:
             # Random direction to the right
-            angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, -0.5 * np.pi, 0.5 * np.pi,
+                                               old_pos)
         # Right border
         elif f[X_POS] > self.width - self.padding:
             # Random direction to the left
-            angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, 0.5 * np.pi, 1.5 * np.pi,
+                                               old_pos)
         # Top border
         if f[Y_POS] < self.padding:
             # Random direction up
-            angle = np.random.uniform(0, np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, 0, np.pi, old_pos)
         # Bottom border
         elif f[Y_POS] > self.height - self.padding:
             # Random direction down
-            angle = np.random.uniform(np.pi, 2 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, np.pi, 2 * np.pi,
+                                               old_pos)
 
         if (self.get_positioning(*old_pos[POS]) == 'left' and
                 (self.get_positioning(f[X_POS] + self.padding,
@@ -261,35 +258,26 @@ class Simulation(Model):
                  self.get_positioning(f[X_POS] + self.padding,
                                       f[Y_POS]) == 'upper_obstacle')):
             # Random direction to the left
-            angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, 0.5 * np.pi, 1.5 * np.pi,
+                                               old_pos)
         elif (self.get_positioning(*old_pos[POS]) == 'right' and
                 (self.get_positioning(f[X_POS] - self.padding,
                                       f[Y_POS]) == 'lower_obstacle' or
                  self.get_positioning(f[X_POS] - self.padding,
                                       f[Y_POS]) == 'upper_obstacle')):
             # Random direction to the right
-            angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, -0.5 * np.pi, 0.5 * np.pi,
+                                               old_pos)
         elif (self.get_positioning(*old_pos[POS]) == 'tunnel'):
             if (self.get_positioning(f[X_POS], f[Y_POS] - self.padding)
                     == 'lower_obstacle'):
                 # Random direction up
-                angle = np.random.uniform(0, np.pi)
-                f[VEL] = np.array([self.speed * np.cos(angle),
-                                   self.speed * np.sin(angle)])
-                f[POS] = old_pos
+                self.correct_position_and_velocity(f, 0, np.pi, old_pos)
             elif (self.get_positioning(f[X_POS], f[Y_POS] + self.padding)
                     == 'upper_obstacle'):
                 # Random direction down
-                angle = np.random.uniform(np.pi, 2 * np.pi)
-                f[VEL] = np.array([self.speed * np.cos(angle),
-                                   self.speed * np.sin(angle)])
-                f[POS] = old_pos
+                self.correct_position_and_velocity(f, np.pi, 2 * np.pi,
+                                                   old_pos)
 
     def update_velocity(self, i):
         f = self.fish[i]
