@@ -121,16 +121,18 @@ class Simulation(Model):
 
         return np.array(fish)
 
-    def get_neighbours(self, fish, current_fish, radius):
+    def get_neighbours(self, fish, current_fish_index, radius):
         """
         Returns all the fish that are within a certain radius of the current
         fish.
         """
         neighbours = []
 
-        for f in fish:
+        current_fish = fish[current_fish_index]
+        for i in range(len(fish)):
+            f = fish[i]
             # Don't include itself
-            if f.all() == current_fish.all():
+            if i == current_fish_index:
                 continue
 
             # Calculate the Euclidean distance
@@ -142,44 +144,45 @@ class Simulation(Model):
 
         return np.array(neighbours)
 
-    def alignment(self, current_fish):
+    def alignment(self, i):
         """
         Aligns the fish with its neighbours.
         """
-        neighbours = self.get_neighbours(self.fish, current_fish,
+        neighbours = self.get_neighbours(self.fish, i,
                                          self.alignment_radius)
 
         if len(neighbours) == 0:
             # TODO: op andere plek ophogen?
-            self.loner_counter[np.where(self.fish == current_fish)[0][0]] += 1
+            self.loner_counter[i] += 1
             return np.array([0, 0], dtype=float)
 
+        current_fish = self.fish[i]
         return np.mean(neighbours[:, VEL], axis=0) - current_fish[VEL]
 
-    def cohesion(self, current_fish):
+    def cohesion(self, i):
         """
         Moves the fish towards the mean position of its neighbours.
         """
-        neighbours = self.get_neighbours(self.fish, current_fish,
-                                         self.cohesion_radius)
+        neighbours = self.get_neighbours(self.fish, i, self.cohesion_radius)
 
         if len(neighbours) == 0:
             return np.array([0, 0], dtype=float)
 
+        current_fish = self.fish[i]
         return (np.mean(neighbours[:, POS], axis=0) - current_fish[POS] -
                 current_fish[VEL])
 
-    def separation(self, current_fish):
+    def separation(self, i):
         """
         Moves the fish away from its neighbours.
         """
-        neighbours = self.get_neighbours(self.fish, current_fish,
-                                         self.separation_radius)
+        neighbours = self.get_neighbours(self.fish, i, self.separation_radius)
         new_vel = np.array([0, 0], dtype=float)
 
         if len(neighbours) == 0:
             return new_vel
 
+        current_fish = self.fish[i]
         for n in neighbours:
             if n[DIS] != 0:
                 # TODO: optimize
@@ -205,7 +208,8 @@ class Simulation(Model):
         else:
             return 'outside'
 
-    def update_position(self, f):
+    def update_position(self, i):
+        f = self.fish[i]
         old_pos = f[POS]
         f[POS] += f[VEL] * 0.05  # To prevent fish from going too fast
 
@@ -274,16 +278,17 @@ class Simulation(Model):
                                    self.speed * np.sin(angle)])
                 f[POS] = old_pos
 
-    def update_velocity(self, f):
+    def update_velocity(self, i):
         # Randomly change the velocity
+        f = self.fish[i]
         current_angle = np.arctan2(f[Y_VEL], f[X_VEL])
         new_angle = np.random.normal(current_angle, 0.5 * np.pi)
         f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
 
         # TODO: 1 radius?
-        alignment_vel = self.alignment(f) * self.alignment_weight
-        cohesion_vel = self.cohesion(f) * self.cohesion_weight
-        separation_vel = self.separation(f) * self.separation_weight
+        alignment_vel = self.alignment(i) * self.alignment_weight
+        cohesion_vel = self.cohesion(i) * self.cohesion_weight
+        separation_vel = self.separation(i) * self.separation_weight
 
         f[VEL] += alignment_vel + cohesion_vel + separation_vel
 
@@ -291,13 +296,14 @@ class Simulation(Model):
         current_speed = np.sqrt(f[X_VEL]**2 + f[Y_VEL]**2)
         f[VEL] = f[VEL] / current_speed * self.speed
 
-    def update_position_counter(self, f):
+    def update_position_counter(self, i):
+        f = self.fish[i]
         if self.get_positioning(*f[POS]) == 'left':
-            self.left_counter[np.where(self.fish == f)[0][0]] += 1
+            self.left_counter[i] += 1
         elif self.get_positioning(*f[POS]) == 'right':
-            self.right_counter[np.where(self.fish == f)[0][0]] += 1
+            self.right_counter[i] += 1
         elif self.get_positioning(*f[POS]) == 'tunnel':
-            self.tunnel_counter[np.where(self.fish == f)[0][0]] += 1
+            self.tunnel_counter[i] += 1
 
     def calculate_times(self):
         self.loner_time = np.mean(self.loner_counter / self.time) * 100
@@ -311,10 +317,11 @@ class Simulation(Model):
         if self.experiment and self.time > self.end_time:
             return True
 
-        for f in self.fish:
-            self.update_position_counter(f)
-            self.update_velocity(f)
-            self.update_position(f)
+        # calculate the new positions
+        for i in range(len(self.fish)):
+            self.update_position_counter(i)
+            self.update_velocity(i)
+            self.update_position(i)
 
         # Calculate at the last timestep
         if len(self.fish) > 0 and self.time > self.end_time - self.timestep:
