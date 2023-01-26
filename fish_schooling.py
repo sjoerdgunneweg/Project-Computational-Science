@@ -130,7 +130,7 @@ class Simulation(Model):
 
         for f in fish:
             # Don't include itself
-            if f.all() == current_fish.all():
+            if np.array_equal(f, current_fish):
                 continue
 
             # Calculate the Euclidean distance
@@ -149,7 +149,7 @@ class Simulation(Model):
         neighbours = self.get_neighbours(self.fish, current_fish,
                                          self.alignment_radius)
 
-        if len(neighbours) == 0:
+        if neighbours.size == 0:
             # TODO: op andere plek ophogen?
             self.loner_counter[np.where(self.fish == current_fish)[0][0]] += 1
             return np.array([0, 0], dtype=float)
@@ -163,7 +163,7 @@ class Simulation(Model):
         neighbours = self.get_neighbours(self.fish, current_fish,
                                          self.cohesion_radius)
 
-        if len(neighbours) == 0:
+        if neighbours.size == 0:
             return np.array([0, 0], dtype=float)
 
         return (np.mean(neighbours[:, POS], axis=0) - current_fish[POS] -
@@ -177,7 +177,7 @@ class Simulation(Model):
                                          self.separation_radius)
         new_vel = np.array([0, 0], dtype=float)
 
-        if len(neighbours) == 0:
+        if neighbours.size == 0:
             return new_vel
 
         for n in neighbours:
