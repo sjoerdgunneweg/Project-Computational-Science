@@ -21,7 +21,6 @@ from pyics import Model, GUI, paramsweep
 # import numba as nb
 import sys
 import time
-import math
 
 X_POS = 0
 Y_POS = 1
@@ -37,6 +36,7 @@ XMAX = 1
 YMIN = 2
 YMAX = 3
 
+CLUSTER_PERIOD = float('inf')
 
 class Simulation(Model):
     def __init__(self,
@@ -151,7 +151,7 @@ class Simulation(Model):
 
         return np.array(fish)
 
-    def get_neighbours(self, i, radius):
+    def get_neighbours(self, i, radius, return_distances=False):
         """
         Returns all the fish that are within a certain radius of the current
         fish.
@@ -170,7 +170,9 @@ class Simulation(Model):
                                (current_fish[Y_POS] - f[Y_POS])**2)
 
             if distance <= radius:
-                neighbours.append(np.append(f, distance))
+                if return_distances:
+                    f = np.append(f, distance)
+                neighbours.append(f)
 
         return np.array(neighbours)
 
@@ -206,7 +208,7 @@ class Simulation(Model):
         """
         Moves the fish away from its neighbours.
         """
-        neighbours = self.get_neighbours(i, self.separation_radius)
+        neighbours = self.get_neighbours(i, self.separation_radius, True)
         new_vel = np.array([0, 0], dtype=float)
 
         if neighbours.size == 0:
