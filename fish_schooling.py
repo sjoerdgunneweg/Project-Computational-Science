@@ -151,7 +151,7 @@ class Simulation(Model):
 
         return np.array(fish)
 
-    def get_neighbours(self, i, radius):
+    def get_neighbours(self, i, radius, store_distances=False):
         """
         Returns all the fish that are within a certain radius of the current
         fish.
@@ -206,7 +206,7 @@ class Simulation(Model):
         """
         Moves the fish away from its neighbours.
         """
-        neighbours = self.get_neighbours(i, self.separation_radius)
+        neighbours = self.get_neighbours(i, self.separation_radius, True)
         new_vel = np.array([0, 0], dtype=float)
 
         if neighbours.size == 0:
