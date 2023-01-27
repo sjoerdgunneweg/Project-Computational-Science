@@ -170,7 +170,7 @@ class Simulation(Model):
                                (current_fish[Y_POS] - f[Y_POS])**2)
 
             if distance <= radius:
-                if return_distances:
+                if store_distances:
                     f = np.append(f, distance)
                 neighbours.append(f)
 
