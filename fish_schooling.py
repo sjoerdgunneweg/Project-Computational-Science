@@ -19,6 +19,7 @@ from pyics import Model, GUI, paramsweep
 # import numba as nb
 import sys
 import time
+import math
 
 X_POS = 0
 Y_POS = 1
@@ -121,18 +122,18 @@ class Simulation(Model):
 
         return np.array(fish)
 
-    def get_neighbours(self, current_fish_index, radius):
+    def get_neighbours(self, i, radius):
         """
         Returns all the fish that are within a certain radius of the current
         fish.
         """
         neighbours = []
 
-        current_fish = self.fish[current_fish_index]
-        for i in range(len(self.fish)):
-            f = self.fish[i]
+        current_fish = self.fish[i]
+        for j in range(len(self.fish)):
+            f = self.fish[j]
             # Don't include itself
-            if i == current_fish_index:
+            if j == i:
                 continue
 
             # Calculate the Euclidean distance
