@@ -173,11 +173,12 @@ class Simulation(Model):
 
         return np.array(neighbours)
 
-    def alignment(self, i):
+    def alignment(self, i, neighbours):
         """
         Aligns the fish with its neighbours.
         """
-        neighbours = self.get_neighbours(i, self.alignment_radius)
+        if neighbours is None:
+            neighbours = self.get_neighbours(i, self.alignment_radius)
 
         if neighbours.size == 0:
             self.loner_counter[i] += 1
@@ -186,11 +187,12 @@ class Simulation(Model):
         current_fish = self.fish[i]
         return np.mean(neighbours[:, VEL], axis=0) - current_fish[VEL]
 
-    def cohesion(self, i):
+    def cohesion(self, i, neighbours):
         """
         Moves the fish towards the mean position of its neighbours.
         """
-        neighbours = self.get_neighbours(i, self.cohesion_radius)
+        if neighbours is None:
+            neighbours = self.get_neighbours(i, self.cohesion_radius)
 
         if neighbours.size == 0:
             return np.array([0, 0], dtype=float)
@@ -211,9 +213,9 @@ class Simulation(Model):
 
         current_fish = self.fish[i]
 
+        # TODO: optimize?
         for n in neighbours:
             if n[DIS] != 0:
-                # TODO: optimize
                 new_vel += (current_fish[POS] - n[POS]) / n[DIS]**2
 
         return new_vel / len(neighbours) - current_fish[VEL]
@@ -303,8 +305,13 @@ class Simulation(Model):
             new_angle = np.random.normal(current_angle, 0.5 * np.pi)
             f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
 
-        alignment_vel = self.alignment(i) * self.alignment_weight
-        cohesion_vel = self.cohesion(i) * self.cohesion_weight
+        if self.alignment_radius == self.cohesion_radius:
+            neighbours = self.get_neighbours(i, self.alignment_radius)
+        else:
+            neighbours = None
+
+        alignment_vel = self.alignment(i, neighbours) * self.alignment_weight
+        cohesion_vel = self.cohesion(i, neighbours) * self.cohesion_weight
         separation_vel = self.separation(i) * self.separation_weight
 
         f[VEL] += alignment_vel + cohesion_vel + separation_vel
