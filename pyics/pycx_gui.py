@@ -73,7 +73,7 @@ class GUI:
 
         self.rootWindow.wm_title(self.titleText)
         self.rootWindow.protocol('WM_DELETE_WINDOW', self.quitGUI)
-        self.rootWindow.geometry('550x700+740+40')
+        self.rootWindow.geometry('550x760+740+40')
         self.rootWindow.columnconfigure(0, weight=1)
         self.rootWindow.rowconfigure(0, weight=1)
 
@@ -104,6 +104,8 @@ class GUI:
 
         for param in self.model.params:
             var_text = self.param_gui_names.get(param, param)
+            if var_text == 'num_fish':
+                var_text = 'Number of fish'
             can = Canvas(self.frameSim)
             lab = Label(can, width=25, height=1 + var_text.count('\n'),
                         text=var_text.replace('_', ' ').capitalize(), anchor=W,

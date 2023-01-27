@@ -15,6 +15,8 @@ different time steps and a function to visualize these timesteps.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 from pyics import Model, GUI, paramsweep
 # import numba as nb
 import sys
@@ -38,22 +40,31 @@ YMAX = 3
 
 class Simulation(Model):
     def __init__(self,
-                 width=5,
-                 height=5,
-                 fish_density=1.0,
-                 speed=2,
+                 width=5.0,
+                 height=5.0,
+                 num_fish=25,
+                 speed=2.0,
                  alignment_radius=0.5,
                  alignment_weight=0.5,
                  cohesion_radius=0.5,
                  cohesion_weight=0.2,
                  separation_radius=0.2,
                  separation_weight=0.3,
-                 experiment=False):
+                 spawn_location='random',
+                 padding=0.2,
+                 tunnel_width=2.0,
+                 tunnel_height=2.0,
+                 direction_change_period=5,
+                 experiment=False,
+                 end_time=100,
+                 timestep=1,
+                 cluster_period=5
+                 ):
         Model.__init__(self)
 
         self.make_param('width', width)
         self.make_param('height', height)
-        self.make_param('fish_density', fish_density)
+        self.make_param('num_fish', num_fish)
         self.make_param('speed', speed)
         self.make_param('alignment_radius', alignment_radius)
         self.make_param('alignment_weight', alignment_weight)
@@ -61,20 +72,31 @@ class Simulation(Model):
         self.make_param('cohesion_weight', cohesion_weight)
         self.make_param('separation_radius', separation_radius)
         self.make_param('separation_weight', separation_weight)
+        self.make_param('tunnel_width', tunnel_width)
+        self.make_param('tunnel_height', tunnel_height)
+        self.make_param('spawn_location', spawn_location)
 
         self.time = 0
-        self.end_time = 100
-        self.timestep = 1
+        self.end_time = end_time
+        self.timestep = timestep
 
-        # NOTE: obstacles should have the same xmin and xmax
-        self.obstacles = [[1.5, 3.5, 0, 1.5], [1.5, 3.5, 3.5, 5]]
-        self.padding = 0.2
+        self.direction_change_period = direction_change_period
+        self.cluster_period = cluster_period
+        self.num_clusters = 0
+        self.padding = padding
         self.experiment = experiment
 
-        self.loner_counter = []
-        self.left_counter = []
-        self.right_counter = []
-        self.tunnel_counter = []
+        # NOTE: obstacles should have the same xmin and xmax
+        self.obstacles = [
+            [(width - tunnel_width) / 2, (width + tunnel_width) / 2,
+             0, (height - tunnel_height) / 2],
+            [(width - tunnel_width) / 2, (width + tunnel_width) / 2,
+             (height + tunnel_height) / 2, height]]
+
+        self.loner_counter = np.zeros(num_fish)
+        self.left_counter = np.zeros(num_fish)
+        self.right_counter = np.zeros(num_fish)
+        self.tunnel_counter = np.zeros(num_fish)
 
         self.loner_time = 0
         self.left_time = 0
@@ -83,21 +105,34 @@ class Simulation(Model):
 
         self.fish = self.spawn_fish()
 
+    def on_obstacle(self, x, y):
+        """
+        Checks if the given position is on an obstacle (or in its padding).
+        There are six cases to check.
+        """
+        return (
+            self.get_positioning(x - self.padding, y) == 'lower_obstacle' or
+            self.get_positioning(x, y - self.padding) == 'lower_obstacle' or
+            self.get_positioning(x + self.padding, y) == 'lower_obstacle' or
+            self.get_positioning(x - self.padding, y) == 'upper_obstacle' or
+            self.get_positioning(x, y + self.padding) == 'upper_obstacle' or
+            self.get_positioning(x + self.padding, y) == 'upper_obstacle')
+
     def get_random_position(self):
         x = np.random.uniform(self.padding, self.width - self.padding)
         y = np.random.uniform(self.padding, self.height - self.padding)
 
-        while (self.get_positioning(x - self.padding, y) == 'lower_obstacle' or
-               self.get_positioning(x, y - self.padding) == 'lower_obstacle' or
-               self.get_positioning(x + self.padding, y) == 'lower_obstacle' or
-               self.get_positioning(x - self.padding, y) == 'upper_obstacle' or
-               self.get_positioning(x, y + self.padding) == 'upper_obstacle' or
-               self.get_positioning(x + self.padding, y) == 'upper_obstacle'
-            #    or self.get_positioning(x, y) != 'left'
-            #    or self.get_positioning(x, y) != 'tunnel'
-               ):
-            x = np.random.uniform(self.padding, self.width - self.padding)
-            y = np.random.uniform(self.padding, self.height - self.padding)
+        if self.spawn_location == 'random':
+            # Prevent fish from spawning on obstacles
+            while (self.on_obstacle(x, y)):
+                x = np.random.uniform(self.padding, self.width - self.padding)
+                y = np.random.uniform(self.padding, self.height - self.padding)
+        else:
+            # Spawn fish on the given location
+            while (self.on_obstacle(x, y) or
+                   self.get_positioning(x, y) != self.spawn_location):
+                x = np.random.uniform(self.padding, self.width - self.padding)
+                y = np.random.uniform(self.padding, self.height - self.padding)
 
         return x, y
 
@@ -107,18 +142,12 @@ class Simulation(Model):
         The positions of the fish are uniformly distributed.
         """
         fish = []
-        num_fish = int(self.width * self.height * self.fish_density)
 
-        for _ in range(num_fish):
+        for _ in range(self.num_fish):
             angle = np.random.uniform() * 2 * np.pi
             new_fish = [*self.get_random_position(),
                         self.speed * np.cos(angle), self.speed * np.sin(angle)]
             fish.append(new_fish)
-
-        self.loner_counter = np.zeros(num_fish)
-        self.left_counter = np.zeros(num_fish)
-        self.right_counter = np.zeros(num_fish)
-        self.tunnel_counter = np.zeros(num_fish)
 
         return np.array(fish)
 
@@ -145,11 +174,12 @@ class Simulation(Model):
 
         return np.array(neighbours)
 
-    def alignment(self, i):
+    def alignment(self, i, neighbours):
         """
         Aligns the fish with its neighbours.
         """
-        neighbours = self.get_neighbours(i, self.alignment_radius)
+        if neighbours is None:
+            neighbours = self.get_neighbours(i, self.alignment_radius)
 
         if neighbours.size == 0:
             self.loner_counter[i] += 1
@@ -158,11 +188,12 @@ class Simulation(Model):
         current_fish = self.fish[i]
         return np.mean(neighbours[:, VEL], axis=0) - current_fish[VEL]
 
-    def cohesion(self, i):
+    def cohesion(self, i, neighbours):
         """
         Moves the fish towards the mean position of its neighbours.
         """
-        neighbours = self.get_neighbours(i, self.cohesion_radius)
+        if neighbours is None:
+            neighbours = self.get_neighbours(i, self.cohesion_radius)
 
         if neighbours.size == 0:
             return np.array([0, 0], dtype=float)
@@ -183,9 +214,9 @@ class Simulation(Model):
 
         current_fish = self.fish[i]
 
+        # TODO: optimize?
         for n in neighbours:
             if n[DIS] != 0:
-                # TODO: optimize
                 new_vel += (current_fish[POS] - n[POS]) / n[DIS]**2
 
         return new_vel / len(neighbours) - current_fish[VEL]
@@ -208,6 +239,12 @@ class Simulation(Model):
         else:
             return 'outside'
 
+    def correct_position_and_velocity(self, f, a, b, old_pos):
+        angle = np.random.uniform(a, b)
+        f[VEL] = np.array([self.speed * np.cos(angle),
+                           self.speed * np.sin(angle)])
+        f[POS] = old_pos
+
     def update_position(self, i):
         f = self.fish[i]
         old_pos = f[POS]
@@ -216,31 +253,22 @@ class Simulation(Model):
         # Left border
         if f[X_POS] < self.padding:
             # Random direction to the right
-            angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, -0.5 * np.pi, 0.5 * np.pi,
+                                               old_pos)
         # Right border
         elif f[X_POS] > self.width - self.padding:
             # Random direction to the left
-            angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, 0.5 * np.pi, 1.5 * np.pi,
+                                               old_pos)
         # Top border
         if f[Y_POS] < self.padding:
             # Random direction up
-            angle = np.random.uniform(0, np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, 0, np.pi, old_pos)
         # Bottom border
         elif f[Y_POS] > self.height - self.padding:
             # Random direction down
-            angle = np.random.uniform(np.pi, 2 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, np.pi, 2 * np.pi,
+                                               old_pos)
 
         if (self.get_positioning(*old_pos[POS]) == 'left' and
                 (self.get_positioning(f[X_POS] + self.padding,
@@ -248,46 +276,43 @@ class Simulation(Model):
                  self.get_positioning(f[X_POS] + self.padding,
                                       f[Y_POS]) == 'upper_obstacle')):
             # Random direction to the left
-            angle = np.random.uniform(0.5 * np.pi, 1.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, 0.5 * np.pi, 1.5 * np.pi,
+                                               old_pos)
         elif (self.get_positioning(*old_pos[POS]) == 'right' and
                 (self.get_positioning(f[X_POS] - self.padding,
                                       f[Y_POS]) == 'lower_obstacle' or
                  self.get_positioning(f[X_POS] - self.padding,
                                       f[Y_POS]) == 'upper_obstacle')):
             # Random direction to the right
-            angle = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
-            f[VEL] = np.array([self.speed * np.cos(angle),
-                               self.speed * np.sin(angle)])
-            f[POS] = old_pos
+            self.correct_position_and_velocity(f, -0.5 * np.pi, 0.5 * np.pi,
+                                               old_pos)
         elif (self.get_positioning(*old_pos[POS]) == 'tunnel'):
             if (self.get_positioning(f[X_POS], f[Y_POS] - self.padding)
                     == 'lower_obstacle'):
                 # Random direction up
-                angle = np.random.uniform(0, np.pi)
-                f[VEL] = np.array([self.speed * np.cos(angle),
-                                   self.speed * np.sin(angle)])
-                f[POS] = old_pos
+                self.correct_position_and_velocity(f, 0, np.pi, old_pos)
             elif (self.get_positioning(f[X_POS], f[Y_POS] + self.padding)
                     == 'upper_obstacle'):
                 # Random direction down
-                angle = np.random.uniform(np.pi, 2 * np.pi)
-                f[VEL] = np.array([self.speed * np.cos(angle),
-                                   self.speed * np.sin(angle)])
-                f[POS] = old_pos
+                self.correct_position_and_velocity(f, np.pi, 2 * np.pi,
+                                                   old_pos)
 
     def update_velocity(self, i):
         f = self.fish[i]
 
-        # Randomly change the velocity
-        current_angle = np.arctan2(f[Y_VEL], f[X_VEL])
-        new_angle = np.random.normal(current_angle, 0.5 * np.pi)
-        f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
+        # Randomly change the velocity a certain period
+        if self.time % self.direction_change_period == 0:
+            current_angle = np.arctan2(f[Y_VEL], f[X_VEL])
+            new_angle = np.random.normal(current_angle, 0.5 * np.pi)
+            f[VEL] += np.array([np.cos(new_angle), np.sin(new_angle)])
 
-        alignment_vel = self.alignment(i) * self.alignment_weight
-        cohesion_vel = self.cohesion(i) * self.cohesion_weight
+        if self.alignment_radius == self.cohesion_radius:
+            neighbours = self.get_neighbours(i, self.alignment_radius)
+        else:
+            neighbours = None
+
+        alignment_vel = self.alignment(i, neighbours) * self.alignment_weight
+        cohesion_vel = self.cohesion(i, neighbours) * self.cohesion_weight
         separation_vel = self.separation(i) * self.separation_weight
 
         f[VEL] += alignment_vel + cohesion_vel + separation_vel
@@ -312,6 +337,18 @@ class Simulation(Model):
         self.right_time = np.mean(self.right_counter / self.time) * 100
         self.tunnel_time = np.mean(self.tunnel_counter / self.time) * 100
 
+    def get_num_clusters(self):
+        if len(self.fish) > 2:
+            clusters = np.arange(2, min(11, len(self.fish)))  # TODO: tot len(self.fish)?
+            scores = np.zeros(len(clusters))
+            positions = self.fish[:, POS]
+
+            for i, k in enumerate(clusters):
+                kmeans = KMeans(n_clusters=k, n_init=10).fit(positions)
+                scores[i] = silhouette_score(positions, kmeans.labels_)
+
+            self.num_clusters = clusters[np.argmax(scores)]
+
     def step(self):
         self.time += self.timestep
 
@@ -324,8 +361,12 @@ class Simulation(Model):
             self.update_velocity(i)
             self.update_position(i)
 
+        if self.experiment and self.time % self.cluster_period == 0:
+            self.get_num_clusters()
+
         # Calculate at the last timestep
-        if len(self.fish) > 0 and self.time > self.end_time - self.timestep:
+        if (self.experiment and len(self.fish) > 0 and
+                self.time > self.end_time - self.timestep):
             self.calculate_times()
 
     def draw_rect(self, xmin, xmax, ymin, ymax, color):
@@ -340,8 +381,9 @@ class Simulation(Model):
 
         self.draw_rect(0, self.width, 0, self.height, 'cornflowerblue')
 
-        for obstacle in self.obstacles:
-            self.draw_rect(*obstacle, 'darkgray')
+        if self.tunnel_width > 0 and self.tunnel_height > 0:
+            for obstacle in self.obstacles:
+                self.draw_rect(*obstacle, 'darkgray')
 
         plt.quiver(self.fish[:, X_POS], self.fish[:, Y_POS],
                    self.fish[:, X_VEL], self.fish[:, Y_VEL], color='white',
@@ -353,31 +395,50 @@ class Simulation(Model):
         self.left_time = 0
         self.right_time = 0
         self.tunnel_time = 0
+
+        self.loner_counter = np.zeros(self.num_fish)
+        self.left_counter = np.zeros(self.num_fish)
+        self.right_counter = np.zeros(self.num_fish)
+        self.tunnel_counter = np.zeros(self.num_fish)
+
+        self.obstacles = [
+            [(self.width - self.tunnel_width) / 2,
+             (self.width + self.tunnel_width) / 2,
+             0, (self.height - self.tunnel_height) / 2],
+            [(self.width - self.tunnel_width) / 2,
+             (self.width + self.tunnel_width) / 2,
+             (self.height + self.tunnel_height) / 2, self.height]]
+
+        if self.tunnel_width == 0 or self.tunnel_height == 0:
+            self.obstacles = np.zeros((2, 4))
+
+        self.num_clusters = 0
         self.fish = self.spawn_fish()
 
 
-def experiment():
-    num_runs = 2
-    density_range = np.linspace(0, 1, 11)
+def experiment(filename='results'):
+    num_runs = 10
+    num_fish = np.arange(0, 55, 5)
 
     paramsweep(sim, num_runs,
-               {'width': 5, 'height': 5,
-                'fish_density': density_range,
-                'speed': 3,
-                'alignment_radius': 0.5, 'alignment_weight': 0.6,
-                'cohesion_radius': 0.5, 'cohesion_weight': 0.2,
-                'separation_radius': 0.4, 'separation_weight': 0.2},
-               ['loner_time'],
-               csv_base_filename='results')
+               {'num_fish': num_fish},
+               ['num_clusters', 'loner_time', 'left_time', 'right_time',
+                'tunnel_time'],
+               csv_base_filename=f'results/{filename}')
 
 
 if __name__ == '__main__':
     sim = Simulation()
 
     if len(sys.argv) > 1 and sys.argv[1] == '--experiment':
-        sim.experiment = True
         start = time.time()
-        experiment()
+        sim.experiment = True
+
+        if len(sys.argv) > 2:
+            experiment(filename=sys.argv[2])
+        else:
+            experiment()
+
         print(f'Experiment took {(time.time() - start):.2f} seconds')
     else:
         gui = GUI(sim)
