@@ -99,6 +99,32 @@ def plot_tunnel_height_results(filename='plots/tunnel_height_loner_time',
     plt.close()
 
 
+def plot_tunnel_width_results(filename='plots/tunnel_width_loner_time',
+                              show=False):
+    tunnel_width = np.arange(0.0, 5.1, 0.1)
+    data_file = 'results/tunnel_width_results_loner_time.csv'
+    times, ci_low, ci_high = get_times(tunnel_width, data_file)
+
+    plt.title('The percentage of time spent as a loner', fontweight='bold')
+    plt.xlabel('tunnel width')
+    plt.ylabel('time (%)')
+    # plt.figtext(0.01, 0.01,
+    #             '10 repetitions per data point\n'
+    #             'Tunnel size: 2x2')
+
+    plt.plot(tunnel_width, times, 'o-')
+    plt.fill_between(tunnel_width, ci_low, ci_high, alpha=0.2, label='95% CI')
+
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename)
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
 def plot_spawn_left_results(filename='plots/spawn_left_right_time',
                             show=False):
     tunnel_height = np.arange(0.1, 5.0, 0.1)
@@ -156,5 +182,6 @@ def plot_num_clusters(filename='plots/num_clusters', show=False):
 if __name__ == '__main__':
     plot_num_fish()
     plot_tunnel_height_results()
+    plot_tunnel_width_results()
     plot_spawn_left_results()
     plot_num_clusters()
