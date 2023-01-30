@@ -10,33 +10,138 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_times(filename):
+def get_times(xs, filename):
     data = np.genfromtxt(filename, delimiter=',', skip_header=1)
 
-    num_fish = np.arange(0, 51)
-    times = np.zeros(len(num_fish))
-    ci_low = np.zeros(len(num_fish))
-    ci_high = np.zeros(len(num_fish))
+    times = np.zeros(len(xs))
+    ci_low = np.zeros(len(xs))
+    ci_high = np.zeros(len(xs))
 
-    for i, n in enumerate(num_fish):
-        num_fish_data = data[data[:, 0] == n]
-        times[i] = np.mean(num_fish_data[:, -1])
-        ci_low[i] = np.percentile(num_fish_data[:, -1], 2.5)
-        ci_high[i] = np.percentile(num_fish_data[:, -1], 97.5)
+    for i, x in enumerate(xs):
+        x_data = data[data[:, 0] == x]
+        times[i] = np.mean(x_data[:, -1])
 
-    return num_fish, times, ci_low, ci_high
+        # 95% confidence interval
+        ci_low[i] = np.percentile(x_data[:, -1], 2.5)
+        ci_high[i] = np.percentile(x_data[:, -1], 97.5)
+
+    return times, ci_low, ci_high
 
 
-def plot(x, y, ci_low, ci_high, title, filename, show=False):
-    plt.title(title, fontweight='bold')
+def get_num_clusters(xs, filename, num_fish=25, skip_cols=3):
+    data = np.genfromtxt(filename, delimiter=',', skip_header=1)
+    data = data[data[:, 0] == num_fish]
+    data = data[:, skip_cols:]
+
+    num_clusters = np.zeros(len(xs))
+    ci_low = np.zeros(len(xs))
+    ci_high = np.zeros(len(xs))
+
+    for i, x in enumerate(xs):
+        x_data = data[:, x]
+        num_clusters[i] = np.mean(x_data)
+
+        # 95% confidence interval
+        ci_low[i] = np.percentile(x_data, 2.5)
+        ci_high[i] = np.percentile(x_data, 97.5)
+
+    return num_clusters, ci_low, ci_high
+
+
+def plot_num_fish(filename='plots/num_fish_loner_time', show=False):
+    num_fish = np.arange(1, 51)
+    data_file = 'results/num_fish_results_loner_time.csv'
+    times, ci_low, ci_high = get_times(num_fish, data_file)
+
+    plt.title('The percentage of time spent as a loner', fontweight='bold')
     plt.xlabel('number of fish')
     plt.ylabel('time (%)')
     # plt.figtext(0.01, 0.01,
     #             '10 repetitions per data point\n'
     #             'Tunnel size: 2x2')
 
-    plt.plot(x, y, 'o-')
-    plt.fill_between(x, ci_low, ci_high, alpha=0.2, label='95% CI')
+    plt.plot(num_fish, times, 'o-')
+    plt.fill_between(num_fish, ci_low, ci_high, alpha=0.2, label='95% CI')
+
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename)
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def plot_tunnel_height_results(filename='plots/tunnel_height_loner_time',
+                               show=False):
+    tunnel_height = np.arange(0.0, 5.1, 0.1)
+    data_file = 'results/tunnel_height_results_loner_time.csv'
+    times, ci_low, ci_high = get_times(tunnel_height, data_file)
+
+    plt.title('The percentage of time spent as a loner', fontweight='bold')
+    plt.xlabel('tunnel height')
+    plt.ylabel('time (%)')
+    # plt.figtext(0.01, 0.01,
+    #             '10 repetitions per data point\n'
+    #             'Tunnel size: 2x2')
+
+    plt.plot(tunnel_height, times, 'o-')
+    plt.fill_between(tunnel_height, ci_low, ci_high, alpha=0.2, label='95% CI')
+
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename)
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def plot_spawn_left_results(filename='plots/spawn_left_right_time',
+                            show=False):
+    tunnel_height = np.arange(0.1, 5.0, 0.1)
+    data_file = 'results/spawn_left_results_right_time.csv'
+    times, ci_low, ci_high = get_times(tunnel_height, data_file)
+
+    plt.title('The percentage of time spent on the right side',
+              fontweight='bold')
+    plt.xlabel('tunnel height')
+    plt.ylabel('time (%)')
+    # plt.figtext(0.01, 0.01,
+    #             '10 repetitions per data point\n'
+    #             'Tunnel size: 2x2')
+
+    plt.plot(tunnel_height, times, 'o-')
+    plt.fill_between(tunnel_height, ci_low, ci_high, alpha=0.2, label='95% CI')
+
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename)
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def plot_num_clusters(filename='plots/num_clusters', show=False):
+    time = np.arange(5, 105, 5)
+    data_file = 'results/num_fish_results_num_clusters.csv'
+
+    for num_fish in [10, 20, 30, 40, 50]:
+        num_clusters, _, _ = get_num_clusters(
+            time, data_file, num_fish=num_fish, skip_cols=3)
+        plt.plot(time, num_clusters, 'o-', label=f'{num_fish} fish')
+
+    plt.title('The number of clusters over time',
+              fontweight='bold')
+    plt.xlabel('time')
+    plt.ylabel('number of clusters')
+    # plt.figtext(0.01, 0.01,
+    #             '10 repetitions per data point\n'
+    #             'Tunnel size: 2x2')
 
     plt.legend(loc='best')
     plt.tight_layout()
@@ -49,15 +154,7 @@ def plot(x, y, ci_low, ci_high, title, filename, show=False):
 
 
 if __name__ == '__main__':
-    for title, filename, plot_filename in [
-            ('The percentage of time spent as a loner',
-             'results/num_fish_results_loner_time.csv', 'plots/loner_time'),
-            ('The percentage of time spent on the left side',
-             'results/num_fish_results_left_time.csv', 'plots/left_time'),
-            ('The percentage of time spent on the right side',
-             'results/num_fish_results_right_time.csv', 'plots/right_time'),
-            ('The percentage of time spent in the tunnel',
-             'results/num_fish_results_tunnel_time.csv', 'plots/tunnel_time')
-         ]:
-        num_fish, tunnel_times, ci_low, ci_high = get_times(filename)
-        plot(num_fish, tunnel_times, ci_low, ci_high, title, plot_filename)
+    plot_num_fish()
+    plot_tunnel_height_results()
+    plot_spawn_left_results()
+    plot_num_clusters()
