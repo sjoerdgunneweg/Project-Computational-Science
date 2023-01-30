@@ -62,7 +62,7 @@ def plot_num_fish(filename='plots/num_fish_loner_time', show=False):
 
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, dpi=1000)
 
     if show:
         plt.show()
@@ -85,7 +85,7 @@ def plot_tunnel_height_results(filename='plots/tunnel_height_loner_time',
 
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, dpi=1000)
 
     if show:
         plt.show()
@@ -108,7 +108,7 @@ def plot_tunnel_width_results(filename='plots/tunnel_width_loner_time',
 
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, dpi=1000)
 
     if show:
         plt.show()
@@ -132,7 +132,7 @@ def plot_spawn_left_results(filename='plots/spawn_left_right_time',
 
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, dpi=1000)
 
     if show:
         plt.show()
@@ -156,7 +156,7 @@ def plot_num_clusters(filename='plots/num_clusters', show=False):
 
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, dpi=1000)
 
     if show:
         plt.show()
@@ -181,7 +181,32 @@ def plot_tunnel_height_num_clusters(
 
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, dpi=1000)
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def plot_tunnel_width_num_clusters(
+        filename='plots/tunnel_width_num_clusters', show=False):
+    time = np.arange(5, 105, 5)
+    data_file = 'results/tunnel_width_results_num_clusters.csv'
+
+    for width in range(1, 5):
+        num_clusters, _, _ = get_num_clusters(
+            time, data_file, width, skip_cols=3)
+        plt.plot(time, num_clusters, 'o-', label=f'tunnel width: {width}')
+
+    plt.title('The number of clusters over time',
+              fontweight='bold')
+    plt.xlabel('time')
+    plt.ylabel('number of clusters')
+
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename, dpi=1000)
 
     if show:
         plt.show()
@@ -206,7 +231,7 @@ def plot_spawn_left_num_clusters(filename='plots/spawn_left_num_clusters',
 
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, dpi=1000)
 
     if show:
         plt.show()
@@ -221,4 +246,5 @@ if __name__ == '__main__':
     plot_spawn_left_results()
     plot_num_clusters()
     plot_tunnel_height_num_clusters()
+    plot_tunnel_width_num_clusters()
     plot_spawn_left_num_clusters()
