@@ -56,9 +56,6 @@ def plot_num_fish(filename='plots/num_fish_loner_time', show=False):
     plt.title('The percentage of time spent as a loner', fontweight='bold')
     plt.xlabel('number of fish')
     plt.ylabel('time (%)')
-    # plt.figtext(0.01, 0.01,
-    #             '10 repetitions per data point\n'
-    #             'Tunnel size: 2x2')
 
     plt.plot(num_fish, times, 'o-')
     plt.fill_between(num_fish, ci_low, ci_high, alpha=0.2, label='95% CI')
@@ -82,9 +79,6 @@ def plot_tunnel_height_results(filename='plots/tunnel_height_loner_time',
     plt.title('The percentage of time spent as a loner', fontweight='bold')
     plt.xlabel('tunnel height')
     plt.ylabel('time (%)')
-    # plt.figtext(0.01, 0.01,
-    #             '10 repetitions per data point\n'
-    #             'Tunnel size: 2x2')
 
     plt.plot(tunnel_height, times, 'o-')
     plt.fill_between(tunnel_height, ci_low, ci_high, alpha=0.2, label='95% CI')
@@ -108,9 +102,6 @@ def plot_tunnel_width_results(filename='plots/tunnel_width_loner_time',
     plt.title('The percentage of time spent as a loner', fontweight='bold')
     plt.xlabel('tunnel width')
     plt.ylabel('time (%)')
-    # plt.figtext(0.01, 0.01,
-    #             '10 repetitions per data point\n'
-    #             'Tunnel size: 2x2')
 
     plt.plot(tunnel_width, times, 'o-')
     plt.fill_between(tunnel_width, ci_low, ci_high, alpha=0.2, label='95% CI')
@@ -135,9 +126,6 @@ def plot_spawn_left_results(filename='plots/spawn_left_right_time',
               fontweight='bold')
     plt.xlabel('tunnel height')
     plt.ylabel('time (%)')
-    # plt.figtext(0.01, 0.01,
-    #             '10 repetitions per data point\n'
-    #             'Tunnel size: 2x2')
 
     plt.plot(tunnel_height, times, 'o-')
     plt.fill_between(tunnel_height, ci_low, ci_high, alpha=0.2, label='95% CI')
@@ -165,9 +153,6 @@ def plot_num_clusters(filename='plots/num_clusters', show=False):
               fontweight='bold')
     plt.xlabel('time')
     plt.ylabel('number of clusters')
-    # plt.figtext(0.01, 0.01,
-    #             '10 repetitions per data point\n'
-    #             'Tunnel size: 2x2')
 
     plt.legend(loc='best')
     plt.tight_layout()
@@ -193,9 +178,6 @@ def plot_tunnel_height_num_clusters(
               fontweight='bold')
     plt.xlabel('time')
     plt.ylabel('number of clusters')
-    # plt.figtext(0.01, 0.01,
-    #             '10 repetitions per data point\n'
-    #             'Tunnel size: 2x2')
 
     plt.legend(loc='best')
     plt.tight_layout()
