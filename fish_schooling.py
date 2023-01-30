@@ -1,7 +1,7 @@
 """
 Authors:     Sjoerd Gunneweg; Rinji Le; Pjotr Piet
 ID:          13133330; 13344552; 12714933
-Date:        20-01-2020
+Date:        20-01-2023
 Description:
 TODO: update
 
@@ -17,10 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from pyics import Model, GUI, paramsweep
-# import numba as nb
-import sys
-import time
+from pyics import Model, GUI
 
 X_POS = 0
 Y_POS = 1
@@ -363,13 +360,15 @@ class Simulation(Model):
             self.update_velocity(i)
             self.update_position(i)
 
-        if self.experiment and self.time % self.cluster_period == 0:
-            self.get_num_clusters()
+        if self.experiment:
+            # Calculate after a certain period
+            if self.time % self.cluster_period == 0:
+                self.get_num_clusters()
 
-        # Calculate at the last timestep
-        if (self.experiment and len(self.fish) > 0 and
-                self.time > self.end_time - self.timestep):
-            self.calculate_times()
+            # Calculate at the last timestep
+            if (len(self.fish) > 0 and
+                    self.time > self.end_time - self.timestep):
+                self.calculate_times()
 
     def draw_rect(self, xmin, xmax, ymin, ymax, color):
         plt.fill([xmin, xmax, xmax, xmin],
@@ -418,30 +417,7 @@ class Simulation(Model):
         self.fish = self.spawn_fish()
 
 
-def experiment(filename='results'):
-    num_runs = 10
-    num_fish = np.arange(0, 55, 5)
-
-    paramsweep(sim, num_runs,
-               {'num_fish': num_fish},
-               ['num_clusters', 'loner_time', 'left_time', 'right_time',
-                'tunnel_time'],
-               csv_base_filename=f'results/{filename}')
-
-
 if __name__ == '__main__':
     sim = Simulation()
-
-    if len(sys.argv) > 1 and sys.argv[1] == '--experiment':
-        start = time.time()
-        sim.experiment = True
-
-        if len(sys.argv) > 2:
-            experiment(filename=sys.argv[2])
-        else:
-            experiment()
-
-        print(f'Experiment took {(time.time() - start):.2f} seconds')
-    else:
-        gui = GUI(sim)
-        gui.start()
+    gui = GUI(sim)
+    gui.start()
