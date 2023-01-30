@@ -28,9 +28,9 @@ def get_times(xs, filename):
     return times, ci_low, ci_high
 
 
-def get_num_clusters(xs, filename, num_fish=25, skip_cols=3):
+def get_num_clusters(xs, filename, value, skip_cols=3):
     data = np.genfromtxt(filename, delimiter=',', skip_header=1)
-    data = data[data[:, 0] == num_fish]
+    data = data[np.round(data[:, 0], 1) == value]
     data = data[:, skip_cols:]
 
     num_clusters = np.zeros(len(xs))
@@ -158,7 +158,7 @@ def plot_num_clusters(filename='plots/num_clusters', show=False):
 
     for num_fish in [10, 20, 30, 40, 50]:
         num_clusters, _, _ = get_num_clusters(
-            time, data_file, num_fish=num_fish, skip_cols=3)
+            time, data_file, num_fish, skip_cols=3)
         plt.plot(time, num_clusters, 'o-', label=f'{num_fish} fish')
 
     plt.title('The number of clusters over time',
@@ -179,9 +179,64 @@ def plot_num_clusters(filename='plots/num_clusters', show=False):
     plt.close()
 
 
+def plot_tunnel_height_num_clusters(
+        filename='plots/tunnel_height_num_clusters', show=False):
+    time = np.arange(5, 105, 5)
+    data_file = 'results/tunnel_height_results_num_clusters.csv'
+
+    for height in range(1, 5):
+        num_clusters, _, _ = get_num_clusters(
+            time, data_file, height, skip_cols=3)
+        plt.plot(time, num_clusters, 'o-', label=f'tunnel height: {height}')
+
+    plt.title('The number of clusters over time',
+              fontweight='bold')
+    plt.xlabel('time')
+    plt.ylabel('number of clusters')
+    # plt.figtext(0.01, 0.01,
+    #             '10 repetitions per data point\n'
+    #             'Tunnel size: 2x2')
+
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename)
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
+def plot_spawn_left_num_clusters(filename='plots/spawn_left_num_clusters',
+                                 show=False):
+    time = np.arange(5, 105, 5)
+    data_file = 'results/spawn_left_results_num_clusters.csv'
+
+    for height in range(1, 5):
+        num_clusters, _, _ = get_num_clusters(
+            time, data_file, height, skip_cols=4)
+        plt.plot(time, num_clusters, 'o-', label=f'tunnel height: {height}')
+
+    plt.title('The number of clusters over time',
+              fontweight='bold')
+    plt.xlabel('time')
+    plt.ylabel('number of clusters')
+
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(filename)
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+
 if __name__ == '__main__':
     plot_num_fish()
     plot_tunnel_height_results()
     plot_tunnel_width_results()
     plot_spawn_left_results()
     plot_num_clusters()
+    plot_tunnel_height_num_clusters()
+    plot_spawn_left_num_clusters()
