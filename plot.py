@@ -1,9 +1,16 @@
 """
 Authors:     Sjoerd Gunneweg; Rinji Le; Pjotr Piet
 ID:          13133330; 13344552; 12714933
-Date:        27-01-2023
+Date:        31-01-2023
 Description:
-TODO
+This file plots the results of the experiments. The plots are saved in the
+'plots' folder.
+
+Usage:
+python3 plot.py
+
+NOTE: It takes a longer time than as expected, because the plots are saved
+with a high resolution.
 """
 
 import numpy as np
@@ -11,6 +18,13 @@ import matplotlib.pyplot as plt
 
 
 def get_times(xs, filename):
+    """
+    Gets the times for the given values of x from the given file.
+    :param xs: The values of x.
+    :param filename: The file to get the data from.
+    :return: The times, the lower bound of the 95% confidence interval, and
+    the upper bound of the 95% confidence interval.
+    """
     data = np.genfromtxt(filename, delimiter=',', skip_header=1)
 
     times = np.zeros(len(xs))
@@ -29,6 +43,15 @@ def get_times(xs, filename):
 
 
 def get_num_clusters(xs, filename, value, skip_cols=3):
+    """
+    Gets the number of clusters for the given values of x from the given file.
+    :param xs: The values of x.
+    :param filename: The file to get the data from.
+    :param value: The value of the first parameter in the file.
+    :param skip_cols: The number of columns to skip before the data.
+    :return: The number of clusters, the lower bound of the 95% confidence
+    interval, and the upper bound of the 95% confidence interval.
+    """
     data = np.genfromtxt(filename, delimiter=',', skip_header=1)
     data = data[np.round(data[:, 0], 1) == value]
     data = data[:, skip_cols:]
@@ -49,6 +72,12 @@ def get_num_clusters(xs, filename, value, skip_cols=3):
 
 
 def plot_num_fish(filename='plots/num_fish_loner_time', show=False):
+    """
+    Plots the average percentage of time spent as a loner for different numbers
+    of fish. The confidence intervals are also plotted.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     num_fish = np.arange(1, 51)
     data_file = 'results/num_fish_results_loner_time.csv'
     times, ci_low, ci_high = get_times(num_fish, data_file)
@@ -72,6 +101,12 @@ def plot_num_fish(filename='plots/num_fish_loner_time', show=False):
 
 def plot_tunnel_height_results(filename='plots/tunnel_height_loner_time',
                                show=False):
+    """
+    Plots the average percentage of time spent as a loner for different tunnel
+    heights. The confidence intervals are also plotted.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     tunnel_height = np.arange(0.0, 5.1, 0.1)
     data_file = 'results/tunnel_height_results_loner_time.csv'
     times, ci_low, ci_high = get_times(tunnel_height, data_file)
@@ -95,6 +130,12 @@ def plot_tunnel_height_results(filename='plots/tunnel_height_loner_time',
 
 def plot_tunnel_width_results(filename='plots/tunnel_width_loner_time',
                               show=False):
+    """
+    Plots the average percentage of time spent as a loner for different tunnel
+    widths. The confidence intervals are also plotted.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     tunnel_width = np.arange(0.0, 5.1, 0.1)
     data_file = 'results/tunnel_width_results_loner_time.csv'
     times, ci_low, ci_high = get_times(tunnel_width, data_file)
@@ -118,6 +159,13 @@ def plot_tunnel_width_results(filename='plots/tunnel_width_loner_time',
 
 def plot_spawn_left_results(filename='plots/spawn_left_right_time',
                             show=False):
+    """
+    Plots the average percentage of time spent on the right side with the
+    initial spawn location on the left. The confidence intervals are also
+    plotted.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     tunnel_height = np.arange(0.1, 5.0, 0.1)
     data_file = 'results/spawn_left_results_right_time.csv'
     times, ci_low, ci_high = get_times(tunnel_height, data_file)
@@ -141,6 +189,13 @@ def plot_spawn_left_results(filename='plots/spawn_left_right_time',
 
 
 def plot_num_clusters(filename='plots/num_clusters', show=False):
+    """
+    Plots the average number of clusters over time for different numbers of
+    fish. The time step is 5, because the number of clusters is calculated
+    every 5 time steps.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     time = np.arange(5, 105, 5)
     data_file = 'results/num_fish_results_num_clusters.csv'
 
@@ -166,6 +221,13 @@ def plot_num_clusters(filename='plots/num_clusters', show=False):
 
 def plot_tunnel_height_num_clusters(
         filename='plots/tunnel_height_num_clusters', show=False):
+    """
+    Plots the average number of clusters over time for different tunnel
+    heights. The time step is 5, because the number of clusters is calculated
+    every 5 time steps.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     time = np.arange(5, 105, 5)
     data_file = 'results/tunnel_height_results_num_clusters.csv'
 
@@ -191,6 +253,13 @@ def plot_tunnel_height_num_clusters(
 
 def plot_tunnel_width_num_clusters(
         filename='plots/tunnel_width_num_clusters', show=False):
+    """
+    Plots the average number of clusters over time for different tunnel
+    widths. The time step is 5, because the number of clusters is calculated
+    every 5 time steps.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     time = np.arange(5, 105, 5)
     data_file = 'results/tunnel_width_results_num_clusters.csv'
 
@@ -216,6 +285,13 @@ def plot_tunnel_width_num_clusters(
 
 def plot_spawn_left_num_clusters(filename='plots/spawn_left_num_clusters',
                                  show=False):
+    """
+    Plots the average number of clusters over time for different tunnel
+    heights with the initial spawn location on the left. The time step is 5,
+    because the number of clusters is calculated every 5 time steps.
+    :param filename: The filename to save the plot to.
+    :param show: Whether to show the plot.
+    """
     time = np.arange(5, 105, 5)
     data_file = 'results/spawn_left_results_num_clusters.csv'
 

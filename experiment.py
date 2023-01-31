@@ -13,6 +13,9 @@ right and tunnel area, and the time the fish spend as a loner.
 
 Usage:
 python3 experiment.py
+
+NOTE: The experiments take a long time to run (± 1 hour). The results are
+already saved in the 'results' folder.
 """
 
 import numpy as np
