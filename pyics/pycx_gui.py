@@ -73,7 +73,7 @@ class GUI:
 
         self.rootWindow.wm_title(self.titleText)
         self.rootWindow.protocol('WM_DELETE_WINDOW', self.quitGUI)
-        self.rootWindow.geometry('550x760+740+40')
+        self.rootWindow.geometry('550x760+800+0')
         self.rootWindow.columnconfigure(0, weight=1)
         self.rootWindow.rowconfigure(0, weight=1)
 
@@ -246,7 +246,7 @@ class GUI:
 
     def drawModel(self):
         if self.modelFigure is None:
-            self.modelFigure = plt.figure()
+            self.modelFigure = plt.figure(figsize=(7, 7))
             plt.ion()
         # plt.show() will cause the plot to be actually displayed
             plt.show()
