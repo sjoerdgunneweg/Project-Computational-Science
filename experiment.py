@@ -1,9 +1,18 @@
 """
 Authors:     Sjoerd Gunneweg; Rinji Le; Pjotr Piet
 ID:          13133330; 13344552; 12714933
-Date:        30-01-2023
+Date:        31-01-2023
 Description:
-TODO
+This file contains the code for the experiments of the fish schooling
+simulation. The experiments are run using the 'paramsweep' function. This
+function runs the simulation for a given number of runs and a given set of
+parameters. The results of the simulations are saved in a csv file in the
+'results' folder. For each experiment, multiple metrics are saved:
+the number of clusters, the time the fish spend in the left,
+right and tunnel area, and the time the fish spend as a loner.
+
+Usage:
+python3 experiment.py
 """
 
 import numpy as np
@@ -13,6 +22,10 @@ from pyics import paramsweep
 
 
 def num_fish_experiment(sim):
+    """
+    Runs the experiment for different numbers of fish.
+    :param sim: The simulation object.
+    """
     num_runs = 20
     num_fish = np.arange(1, 51)
 
@@ -24,6 +37,10 @@ def num_fish_experiment(sim):
 
 
 def tunnel_height_experiment(sim):
+    """
+    Runs the experiment for different tunnel heights.
+    :param sim: The simulation object.
+    """
     num_runs = 20
     tunnel_height = np.arange(0.0, 5.1, 0.1)
 
@@ -35,6 +52,10 @@ def tunnel_height_experiment(sim):
 
 
 def tunnel_width_experiment(sim):
+    """
+    Runs the experiment for different tunnel widths.
+    :param sim: The simulation object.
+    """
     num_runs = 20
     tunnel_width = np.arange(0.0, 5.1, 0.1)
 
@@ -46,6 +67,11 @@ def tunnel_width_experiment(sim):
 
 
 def spawn_left_experiment(sim):
+    """
+    Runs the experiment for different tunnel heights by spawning the fish
+    on the left side of the tunnel.
+    :param sim: The simulation object.
+    """
     num_runs = 20
     tunnel_height = np.arange(0.1, 5.0, 0.1)
 
