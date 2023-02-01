@@ -322,7 +322,7 @@ def plot_spawn_left_num_clusters(filename='plots/spawn_left_num_clusters',
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         if sys.argv[1] == '-code_review':
-            plot_tunnel_height_num_clusters('code_review')
+            plot_tunnel_height_num_clusters(filename='plots/code_review')
     else:
         plot_num_fish()
         plot_tunnel_height_results()
