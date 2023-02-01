@@ -1,7 +1,7 @@
 """
 Authors:     Sjoerd Gunneweg; Rinji Le; Pjotr Piet
 ID:          13133330; 13344552; 12714933
-Date:        31-01-2023
+Date:        January 31, 2023
 Description:
 This file contains the code for the experiments of the fish schooling
 simulation. The experiments are run using the 'paramsweep' function. This
