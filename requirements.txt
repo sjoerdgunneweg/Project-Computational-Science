@@ -1,4 +1,7 @@
 numpy~=1.23.5
 matplotlib~=3.6.3
+scikit-learn~=1.2.1
+sklearn~=0.0.post0
 tqdm~=4.64.1
+tk~=0.1.0
 
