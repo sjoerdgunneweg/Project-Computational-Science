@@ -20,7 +20,7 @@ already saved in the 'results' folder.
 
 import numpy as np
 import time
-from fish_schooling import Simulation
+from simulation import Simulation
 from pyics import paramsweep
 
 
