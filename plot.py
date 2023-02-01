@@ -115,7 +115,8 @@ def plot_tunnel_height_results(filename='plots/tunnel_height_loner_time',
     data_file = 'results/tunnel_height_results_loner_time.csv'
     times, ci_low, ci_high = get_times(tunnel_height, data_file)
 
-    plt.title('The percentage of time spent as a loner', fontweight='bold')
+    plt.title('The average percentage of time spent as a loner',
+              fontweight='bold')
     plt.xlabel('tunnel height')
     plt.ylabel('time (%)')
 
@@ -144,7 +145,8 @@ def plot_tunnel_width_results(filename='plots/tunnel_width_loner_time',
     data_file = 'results/tunnel_width_results_loner_time.csv'
     times, ci_low, ci_high = get_times(tunnel_width, data_file)
 
-    plt.title('The percentage of time spent as a loner', fontweight='bold')
+    plt.title('The average percentage of time spent as a loner',
+              fontweight='bold')
     plt.xlabel('tunnel width')
     plt.ylabel('time (%)')
 
@@ -272,7 +274,7 @@ def plot_tunnel_width_num_clusters(
             time, data_file, width, skip_cols=3)
         plt.plot(time, num_clusters, 'o-', label=f'tunnel width: {width}')
 
-    plt.title('The number of clusters over time',
+    plt.title('The average number of clusters over time',
               fontweight='bold')
     plt.xlabel('time')
     plt.ylabel('number of clusters')
@@ -304,7 +306,7 @@ def plot_spawn_left_num_clusters(filename='plots/spawn_left_num_clusters',
             time, data_file, height, skip_cols=4)
         plt.plot(time, num_clusters, 'o-', label=f'tunnel height: {height}')
 
-    plt.title('The number of clusters over time',
+    plt.title('The average number of clusters over time',
               fontweight='bold')
     plt.xlabel('time')
     plt.ylabel('number of clusters')
