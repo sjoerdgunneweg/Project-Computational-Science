@@ -8,15 +8,12 @@ import itertools
 import numpy
 from tqdm import tqdm
 
-try:
-    # Python 2
-    str_types = (str, unicode)
-except NameError:
-    # Python 3
-    str_types = (bytes, str)
+str_types = (bytes, str)
+
 
 def get_measurement(model, attr):
-    """Returns the value of a given measurement attribute for a given model.
+    """
+    Returns the value of a given measurement attribute for a given model.
 
     A measurement attribute can be one of the following things:
      * A string representing an attribute of the model, which can either be:
@@ -24,7 +21,8 @@ def get_measurement(model, attr):
       - a method (callable)
      * A function which is a method of the model (will be called without args)
      * A normal function (or lambda, any callable), which will receive the
-       simulation instance as argument."""
+       simulation instance as argument.
+       """
 
     if callable(attr):
         # If the passed callable is a method of the model we
@@ -41,9 +39,11 @@ def get_measurement(model, attr):
             m = m()
         return m
 
+
 def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
                csv_base_filename=None, measure_interval=1):
-    """Performs a parameter sweep over Model instance `model', setting the
+    """
+    Performs a parameter sweep over Model instance `model', setting the
     parameters defined in the dictionary `param_space', each combination
     `repetitions' times, and outputs all measurements as defined by
     `measure_attrs' to a csv file.
@@ -57,16 +57,16 @@ def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
     measurement for that iterations).
 
     Optionally, the frequency of the measurements can be set using the
-    `measure_interval' parameter.. By default this value is 1, and thus every
-    iteration a measurement is made. For a value of 5, measurements are recorded
-    iteration 0, 5, 10, etc. If this parameter is set to 0, a measurement will
-    only be recorded at the end of a run.
+    `measure_interval' parameter. By default this value is 1, and thus every
+    iteration a measurement is made. For a value of 5, measurements are
+    recorded iteration 0, 5, 10, etc. If this parameter is set to 0, a
+    measurement will only be recorded at the end of a run.
 
     The way this is written to csv is similar: for every measurement a separate
-    csv file is created (e.g. "%s_%d.csv" % (csv_base_filename, measurement) for
-    every measurement). In this file every row contains a single executions (and
-    thus per column the iterations). Note that the first columns will contain
-    the parameter values and the repetition number.
+    csv file is created (e.g. "%s_%d.csv" % (csv_base_filename, measurement)
+    for every measurement). In this file every row contains a single executions
+    (and thus per column the iterations). Note that the first columns will
+    contain the parameter values and the repetition number.
 
         >>> from some_sim import Sim
         >>> mysim = Sim()
@@ -75,7 +75,8 @@ def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
         ...      'height': 60,
         ...      'turtles': range(10)},
         ...     ['iterations',
-        ...      (lambda sim: sim.iterations / sim.turtle_count)])"""
+        ...      (lambda sim: sim.iterations / sim.turtle_count)])
+    """
 
     accepted_iterables = (list, tuple, numpy.ndarray)
 
@@ -92,7 +93,8 @@ def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
         for pn, pv in zip(param_names, vals):
             if pn not in model.params:
                 raise ValueError(("param '%s' not a parameter of model (known "
-                        "params: %s)") % (pn, ', '.join(model.params)))
+                                  "params: %s)") % (pn,
+                                                    ', '.join(model.params)))
             setattr(model, pn, pv)
 
         # Perform simulations requested amount of times with current params.
@@ -118,7 +120,8 @@ def paramsweep(model, repetitions, param_space, measure_attrs, max_iter=0,
     if csv_base_filename is not None:
         # Dump results to csv files: one per measurement, row per run
         for i, m in enumerate(measurements):
-            with open('%s_%s.csv' % (csv_base_filename, measure_attrs[i]), 'w') as f:
+            with open('%s_%s.csv' % (csv_base_filename, measure_attrs[i]),
+                      'w') as f:
                 writer = csv.writer(f)
                 writer.writerow(param_names + ["rep_num"])
                 for j, n in enumerate(m):

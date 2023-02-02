@@ -8,16 +8,24 @@
 #
 
 def make_getter(name):
-    """Returns a getter function which returns the attribute `name'."""
+    """
+    Returns a getter function which returns the attribute `name'.
+    """
     return lambda self: getattr(self, name)
+
+
 def make_setter(name, var_type, user_setter):
-    """Returns a setter function which sets the attribute `name', first casting
-    it to `type' and passing it through the `user_setter' function."""
+    """
+    Returns a setter function which sets the attribute `name', first casting
+    it to `type' and passing it through the `user_setter' function.
+    """
     return lambda self, new_val: setattr(self, name,
-            user_setter(var_type(new_val)))
+                                         user_setter(var_type(new_val)))
+
 
 class Model(object):
-    """Base class for models, which have a reset, step and draw method, and a
+    """
+    Base class for models, which have a reset, step and draw method, and a
     number of parameters.
 
     All models should inherit from this class, and should override the `reset',
@@ -26,8 +34,8 @@ class Model(object):
     A model can optionally have any number of parameters. Parameters are
     variables which influence the simulation that can be changed at-runtime
     (e.g. by a GUI). Any parameters should be registered during initialization
-    of the instance using the `make_param' method."""
-
+    of the instance using the `make_param' method.
+    """
     def __init__(self):
         self.params = []
 
@@ -62,8 +70,9 @@ class Model(object):
             ...         for i in range(self.num_turtles):
             ...             self.turtles.append('turtle')
 
-        The actual variable in which the value is stored (and which the property
-        accesses) is called _param_VARNAME, and should not be used directly.
+        The actual variable in which the value is stored (and which the
+        property accesses) is called _param_VARNAME, and should not be used
+        directly.
         """
 
         setter = setter or (lambda x: x)

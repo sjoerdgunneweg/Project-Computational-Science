@@ -1,34 +1,34 @@
-## "pycx_gui.py"
-## Realtime Simulation GUI (originally from PyCX)
-##
-## Developed by:
-## Chun Wong
-## email@chunwong.net
-##
-## Revised by:
-## Hiroki Sayama
-## sayama@binghamton.edu
-##
-## Copyright 2012 Chun Wong & Hiroki Sayama
-##
-## Simulation control & GUI extensions
-## Copyright 2013 Przemyslaw Szufel & Bogumil Kaminski
-## {pszufe, bkamins}@sgh.waw.pl
-##
-## Revised by:
-## Koen Koning, K.Koning@uva.nl
-## Modifications to make the code compatible with the framework of the UvA
-## course `Introduction Computational Science', 2014/2015
-##      Python 3 support, GUI refinements, improved parameter support
-##
-## Minor revision by
-## Dick van Albada, G.D.vanAlbada@uva.nl
-## Added plt.show() to drawModel() to force actual display of the plot
-##
-## The matplotlib backend will be automatically selected based on your OS when
-## this file is first imported. It is therefore important that matplotlib.pyplot
-## imported *after* this file. A clean way do to this is to import pyplot
-## locally in the draw function of your model only.
+# "pycx_gui.py"
+# Realtime Simulation GUI (originally from PyCX)
+#
+# Developed by:
+# Chun Wong
+# email@chunwong.net
+#
+# Revised by:
+# Hiroki Sayama
+# sayama@binghamton.edu
+#
+# Copyright 2012 Chun Wong & Hiroki Sayama
+#
+# Simulation control & GUI extensions
+# Copyright 2013 Przemyslaw Szufel & Bogumil Kaminski
+# {pszufe, bkamins}@sgh.waw.pl
+#
+# Revised by:
+# Koen Koning, K.Koning@uva.nl
+# Modifications to make the code compatible with the framework of the UvA
+# course `Introduction Computational Science', 2014/2015
+#      Python 3 support, GUI refinements, improved parameter support
+#
+# Minor revision by
+# Dick van Albada, G.D.vanAlbada@uva.nl
+# Added plt.show() to drawModel() to force actual display of the plot
+#
+# The matplotlib backend will be automatically selected based on your OS when
+# this file is first imported. It is therefore important that matplotlib.pyplot
+# imported *after* this file. A clean way do to this is to import pyplot
+# locally in the draw function of your model only.
 
 import sys
 
@@ -43,13 +43,13 @@ else:
 
 import matplotlib.pyplot as plt
 from tkinter import (Tk, StringVar, Frame, Label, Button, Scale, Entry,
-                     Canvas, Scrollbar, Text, YES, NO, LEFT, RIGHT, BOTH, TOP,
-                     SUNKEN, X, Y, W, WORD, NORMAL, DISABLED, HORIZONTAL, END)
+                     Canvas, YES, NO, LEFT, BOTH, TOP,
+                     SUNKEN, X, W, NORMAL, DISABLED, HORIZONTAL, END)
 
 
 class GUI:
-    def __init__(self, model, title='Fish Schooling Simulator', interval=0, stepSize=1,
-            param_gui_names=None):
+    def __init__(self, model, title='Fish Schooling Simulator', interval=0,
+                 stepSize=1, param_gui_names=None):
         self.model = model
         self.titleText = title
         self.timeInterval = interval
@@ -66,7 +66,7 @@ class GUI:
         self.initGUI()
 
     def initGUI(self):
-        #create root window
+        # Create root window
         self.rootWindow = Tk()
         self.statusText = StringVar(value=self.statusStr)
         self.setStatusStr("Simulation not yet started")
@@ -120,32 +120,36 @@ class GUI:
             can.pack(side='top')
             self.param_entries[param] = ent
         if self.param_entries:
-            self.buttonSaveParameters = Button(self.frameSim, width=50,
-                    height=1, command=self.saveParametersCmd,
-                    text="Save parameters to the running model", state=DISABLED)
-            self.showHelp(self.buttonSaveParameters,
-                    "Saves the parameter values.\n" +
-                    "Not all values may take effect on a running model\n" +
-                    "A model reset might be required.")
+            self.buttonSaveParameters = Button(
+                self.frameSim, width=50, height=1,
+                command=self.saveParametersCmd,
+                text="Save parameters to the running model", state=DISABLED)
+            self.showHelp(
+                self.buttonSaveParameters, "Saves the parameter values.\n" +
+                "Not all values may take effect on a running model\n" +
+                "A model reset might be required.")
             self.buttonSaveParameters.pack(side='top', padx=5, pady=5)
-            self.buttonSaveParametersAndReset = Button(self.frameSim, width=50,
-                    height=1, command=self.saveParametersAndResetCmd,
-                    text="Save parameters to the model and reset the model")
-            self.showHelp(self.buttonSaveParametersAndReset,
-                    "Saves the given parameter values and resets the model")
+            self.buttonSaveParametersAndReset = Button(
+                self.frameSim, width=50, height=1,
+                command=self.saveParametersAndResetCmd,
+                text="Save parameters to the model and reset the model")
+            self.showHelp(
+                self.buttonSaveParametersAndReset,
+                "Saves the given parameter values and resets the model")
             self.buttonSaveParametersAndReset.pack(side='top', padx=5, pady=5)
 
         can = Canvas(self.frameSim)
         lab = Label(can, width=25, height=1, text="Step size ", justify=LEFT,
-                anchor=W, takefocus=0)
+                    anchor=W, takefocus=0)
         lab.pack(side='left')
         self.stepScale = Scale(can, from_=1, to=500, resolution=1,
                                command=self.changeStepSize, orient=HORIZONTAL,
                                width=25, length=150)
         self.stepScale.set(self.stepSize)
-        self.showHelp(self.stepScale,
-                "Skips model redraw during every [n] simulation steps\n" +
-                "Results in a faster model run.")
+        self.showHelp(
+            self.stepScale,
+            "Skips model redraw during every [n] simulation steps\n" +
+            "Results in a faster model run.")
         self.stepScale.pack(side='left')
         can.pack(side='top')
 
@@ -168,7 +172,7 @@ class GUI:
         self.statusStr = newStatus
         self.statusText.set(self.statusStr)
 
-    #model control functions
+    # Model control functions
     def changeStepSize(self, val):
         self.stepSize = int(val)
 
