@@ -8,9 +8,9 @@
 
 ## Introduction
 This project is a simulation of fish schooling. With our own Agent-Based model, we use the Boids algorithm to simulate the movement of fish. For this algorithm, three rules are used to determine the direction of the fish:
-1. Separation: fish move away from their neighbors.
-2. Alignment: fish move in the same direction as their neighbors.
-3. Cohesion: fish move towards the center of mass of their neighbors.
+1. Separation: fish move away from their neighbours.
+2. Alignment: fish move in the same direction as their neighbours.
+3. Cohesion: fish move towards the center of mass of their neighbours.
 
 ## Prerequisites
 Run the following command to install the required packages:
@@ -28,7 +28,7 @@ To execute the experiments, run:
 python3 experiment.py
 ```
 
-Note that the experiments take around hours to run. The results when we ran the experiments are already saved in the `results/` folder.
+Note that the experiments take a few hours to run. The results when we ran the experiments are already saved in the `results/` folder.
 
 Finally, to generate all the plots, run:
 ```
