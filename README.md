@@ -7,10 +7,15 @@
 * [Code Review](#code-review)
 
 ## Introduction
-This project is a simulation of fish schooling. With our own Agent-Based model, we use the Boids algorithm to simulate the movement of fish. For this algorithm, three rules are used to determine the direction of the fish:
+This project is a simulation of fish schooling. With our own Agent-Based model, we use the Boids algorithm to simulate 
+the movement of fish. For this algorithm, three rules are used to determine the direction of the fish:
 1. Separation: fish move away from their neighbours.
 2. Alignment: fish move in the same direction as their neighbours.
 3. Cohesion: fish move towards the center of mass of their neighbours.
+
+Then we also added a function to make the boids turn back into the tank if they encounter a wall. This is done by giving
+these fish a random direction away from the wall they just encountered. For more realistic behaviour we also let every 
+fish change directions randomly every nth step.
 
 ## Prerequisites
 Run the following command to install the required packages:
