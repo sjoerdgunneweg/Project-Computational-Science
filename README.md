@@ -28,7 +28,7 @@ To execute the experiments, run:
 python3 experiment.py
 ```
 
-Note that the experiments take a few hours to run. The results when we ran the experiments are already saved in the `results/` folder.
+Note that the experiments take around 5 hours in total to run. The results when we ran the experiments are already saved in the `results/` folder.
 
 Finally, to generate all the plots, run:
 ```
