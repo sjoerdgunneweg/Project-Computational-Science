@@ -237,10 +237,16 @@ def plot_tunnel_height_num_clusters(
     time = np.arange(5, 105, 5)
     data_file = 'results/tunnel_height_results_num_clusters.csv'
 
-    for height in range(1, 5):
+    for height in range(0, 5):
         num_clusters, _, _ = get_num_clusters(
             time, data_file, height, skip_cols=3)
-        plt.plot(time, num_clusters, 'o-', label=f'tunnel height: {height}')
+
+        if height == 0:
+            label = 'no tunnel'
+        else:
+            label = f'tunnel height: {height}'
+
+        plt.plot(time, num_clusters, 'o-', label=label)
 
     plt.title('The average number of clusters over time',
               fontweight='bold')
